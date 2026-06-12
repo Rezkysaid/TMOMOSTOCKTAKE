@@ -51,8 +51,17 @@ body.dark .watermark { background:#132850; border-color:#2a4f82; color:#6b9cc4; 
 body.dark .cat-section { background:#0a1628; }
 body.dark .cat-tab { background:#132850; border-color:#2a4f82; color:#8ab4d4; }
 body.dark .cat-tab.active { background:#0d9488; border-color:#4ecdc4; color:#fff; }
-body.dark .panel-top { background:#0d6b5f; }
-body.dark .panel-bottom { background:#0d9488; }
+body.dark .panel-top { background:#0a3d35; }
+body.dark .panel-bottom { background:#0d5c54; }
+body.dark .panel-bottom .panel-qty-num { color:#e2f0ff; }
+body.dark .panel-bottom .panel-qty-num.low { color:#f87171; }
+body.dark .panel-bottom .panel-qty-num.warn { color:#fbbf24; }
+body.dark .panel-bottom .panel-qty-num.ok { color:#4ade80; }
+body.dark .panel-bottom .panel-qty-block { border-right-color:rgba(255,255,255,0.1); }
+body.dark .panel-bottom .diff-chip.pos { color:#4ade80; }
+body.dark .panel-bottom .diff-chip.neg { color:#f87171; }
+body.dark .panel-bottom .diff-chip.zero { color:rgba(255,255,255,0.4); }
+body.dark .panel-bottom .panel-label { color:rgba(255,255,255,0.5); }
 body.dark .modal { background:#0f2040; border-color:#2a4f82; }
 body.dark .form-group input, body.dark .form-group select { background:#0a1628; border-color:#2a4f82; color:#e2f0ff; }
 body.dark .btn-cancel { background:#132850; border-color:#2a4f82; color:#8ab4d4; }
@@ -73,8 +82,26 @@ body.dark .btn-cancel { background:#132850; border-color:#2a4f82; color:#8ab4d4;
 .btn-theme:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
 
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--body-bg);color:var(--text);font-family:'Poppins',sans-serif;min-height:100vh;
+body{
+  background-color:var(--body-bg);
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent,
+    transparent 40px,
+    rgba(78,205,196,0.15) 40px,
+    rgba(78,205,196,0.15) 56px
+  );
+  color:var(--text);font-family:'Poppins',sans-serif;min-height:100vh;
   transition: background 0.3s, color 0.3s;
+}
+body.dark {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent,
+    transparent 40px,
+    rgba(78,205,196,0.06) 40px,
+    rgba(78,205,196,0.06) 56px
+  );
 }
 
 /* HEADER */
