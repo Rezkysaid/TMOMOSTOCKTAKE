@@ -119,117 +119,104 @@ header{background:var(--teal);padding:12px 16px;display:flex;align-items:center;
 .filter-select{background:var(--card);border:2px solid var(--border2);color:var(--text);padding:12px 10px;border-radius:14px;font-family:var(--sans);font-size:12px;outline:none;-webkit-appearance:none;cursor:pointer;box-shadow:inset 0 3px 0 rgba(0,0,0,0.2);font-weight:600;}
 
 
-/* ITEMS - PANEL/MAGAZINE LAYOUT */
-.items-list{display:flex;flex-direction:column;gap:8px;}
+/* ITEMS - TWO TONE TEAL CARD */
+.items-list{display:flex;flex-direction:column;gap:10px;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
 .item-card{
-  background:var(--card);
-  border:3px solid #000;
-  border-radius:4px;
+  border-radius:16px;
   overflow:hidden;
   animation:fadeIn 0.2s ease;
-  box-shadow:4px 4px 0 #000;
+  box-shadow:0 4px 12px rgba(0,0,0,0.15);
 }
 
-/* TOP ROW: category badge + item name */
-.panel-row{display:flex;border-bottom:2px solid #000;}
-.panel-row:last-child{border-bottom:none;}
-.panel-row-top{min-height:40px;}
-.panel-cat{
-  flex-shrink:0;width:28%;
-  background:var(--gold);
-  color:#000;
-  font-size:9px;font-weight:900;
-  text-transform:uppercase;
-  letter-spacing:0.5px;
-  display:flex;align-items:center;justify-content:center;
-  padding:6px 4px;text-align:center;
-  border-right:2px solid #000;
-  line-height:1.2;
+/* TOP section - dark teal */
+.panel-top{
+  background:#2d7d6f;
+  padding:12px 14px 10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:8px;
 }
+.panel-top-info{flex:1;min-width:0;}
 .panel-name{
-  flex:1;
-  font-size:13px;font-weight:700;
-  padding:8px 10px;
-  display:flex;align-items:center;
-  color:var(--text);
+  font-size:14px;font-weight:700;
+  color:#fff;
   line-height:1.3;
-}
-
-/* BARCODE ROW */
-.panel-row-barcode{min-height:36px;align-items:center;}
-.panel-barcode-block{
-  flex:1;
-  padding:6px 10px;
-  border-right:2px solid #000;
-}
-.panel-label{
-  font-size:8px;font-weight:900;
-  text-transform:uppercase;letter-spacing:1px;
-  color:var(--muted);
-  font-family:var(--mono);
+  margin-bottom:4px;
 }
 .panel-barcode{
   font-family:var(--mono);
-  font-size:12px;font-weight:700;
-  color:var(--gold);
-  margin-top:2px;
+  font-size:11px;
+  color:rgba(255,255,255,0.7);
 }
-.panel-actions{
-  display:flex;gap:0;
-  flex-shrink:0;
+.panel-cat-badge{
+  display:inline-block;
+  background:rgba(255,255,255,0.15);
+  color:rgba(255,255,255,0.9);
+  font-size:9px;font-weight:700;
+  padding:2px 8px;border-radius:20px;
+  margin-top:4px;
+  text-transform:uppercase;letter-spacing:0.5px;
 }
+.panel-actions{display:flex;gap:6px;flex-shrink:0;}
+.ibtn{
+  width:32px;height:32px;
+  background:rgba(255,255,255,0.15);
+  border:1px solid rgba(255,255,255,0.25);
+  border-radius:8px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:#fff;font-weight:700;
+}
+.ibtn-del{background:rgba(255,100,100,0.2);border-color:rgba(255,100,100,0.3);}
+.ibtn:active{background:rgba(255,255,255,0.3);}
 
-/* QTY ROW: 3 equal panels */
-.panel-row-qty{min-height:60px;}
-.panel-qty-block{
-  flex:1;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  padding:8px 4px;
-  text-align:center;
-  background:var(--card2);
+/* BOTTOM section - light teal */
+.panel-bottom{
+  background:#4ecdc4;
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
 }
+.panel-qty-block{
+  padding:10px 6px;
+  text-align:center;
+  border-right:1px solid rgba(255,255,255,0.3);
+}
+.panel-qty-block:last-child{border-right:none;}
 .panel-qty-num{
   font-family:var(--mono);
   font-size:22px;font-weight:900;
+  color:#fff;
   line-height:1;
-  color:var(--muted2);
+  text-shadow:0 1px 3px rgba(0,0,0,0.2);
 }
-.panel-qty-num.ok{color:var(--green);}
-.panel-qty-num.low{color:var(--red);}
-.panel-qty-num.warn{color:var(--orange);}
-.panel-qty-num.neutral{color:var(--muted2);}
+.panel-qty-num.low{color:#ff6b6b;}
+.panel-qty-num.warn{color:#ffe66d;}
+.panel-qty-num.ok{color:#fff;}
+.panel-qty-num.neutral{color:rgba(255,255,255,0.8);}
 .panel-label{
-  font-size:7px;font-weight:900;
+  font-size:7px;font-weight:800;
   text-transform:uppercase;letter-spacing:0.8px;
-  color:var(--muted);
+  color:rgba(255,255,255,0.75);
   margin-top:3px;
   font-family:var(--mono);
-  text-align:center;
 }
 
 /* NOTE */
 .panel-note{
-  padding:6px 10px;
+  background:#2d7d6f;
+  padding:6px 14px;
   font-size:11px;
-  color:var(--muted2);
+  color:rgba(255,255,255,0.7);
   font-style:italic;
-  border-top:2px solid #000;
-  background:var(--surface);
 }
 
-/* BUTTONS */
-.ibtn{width:36px;height:36px;background:var(--surface);border:none;border-left:2px solid #000;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted2);font-weight:700;}
-.ibtn-del{color:var(--red);}
-.ibtn:active{background:var(--card2);}
-
 /* DIFF CHIP */
-.diff-chip{display:inline-flex;align-items:center;padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:16px;font-weight:900;}
-.diff-chip.pos{color:var(--green);}
-.diff-chip.neg{color:var(--red);}
-.diff-chip.zero{color:var(--muted2);}
+.diff-chip{font-family:var(--mono);font-size:20px;font-weight:900;color:#fff;}
+.diff-chip.pos{color:#a8ffb0;}
+.diff-chip.neg{color:#ff9a9a;}
+.diff-chip.zero{color:rgba(255,255,255,0.6);}
 
 /* EMPTY */
 .empty-state{text-align:center;padding:50px 20px;display:none;}
@@ -508,38 +495,34 @@ function itemCardHTML(item) {
   const diff = (item.physical||0)-(item.system||0);
   const dc = diff>0?'pos':diff<0?'neg':'zero';
   const dt = diff>0?'+'+diff:''+diff;
-  const pc = item.physical<item.system?'low':item.physical>item.system?'warn':'ok';
-  const pcColor = item.physical===0?'var(--red)':item.physical===item.system?'var(--green)':'var(--orange)';
+  const pc = item.physical===0?'low':item.physical===item.system?'ok':'warn';
   return `<div class="item-card" data-item-id="${item.id}">
-    <div class="panel-row panel-row-top">
-      <div class="panel-cat">${item.category}</div>
-      <div class="panel-name">${item.name||'—'}</div>
-    </div>
-    <div class="panel-row panel-row-barcode">
-      <div class="panel-barcode-block">
-        <div class="panel-label">BARCODE</div>
-        <div class="panel-barcode">${item.barcode||'—'}</div>
+    <div class="panel-top">
+      <div class="panel-top-info">
+        <div class="panel-name">${item.name||'—'}</div>
+        <div class="panel-barcode">${item.barcode||'No barcode'}</div>
+        <div class="panel-cat-badge">${item.category}</div>
+        ${item.note?`<div style="font-size:10px;color:rgba(255,255,255,0.6);margin-top:4px;font-style:italic">✎ ${item.note}</div>`:''}
       </div>
       <div class="panel-actions">
         <button class="ibtn" onclick="editItem('${item.id}')">✎</button>
         <button class="ibtn ibtn-del" onclick="deleteItem('${item.id}')">✕</button>
       </div>
     </div>
-    <div class="panel-row panel-row-qty">
-      <div class="panel-qty-block qty-val-physical" style="border-right:3px solid var(--border2)">
-        <div class="panel-qty-num ${pc}" style="color:${pcColor}">${item.physical||0}</div>
-        <div class="panel-label">KUANTITI PHYSICAL</div>
+    <div class="panel-bottom">
+      <div class="panel-qty-block qty-val-physical">
+        <div class="panel-qty-num ${pc}">${item.physical||0}</div>
+        <div class="panel-label">PHYSICAL</div>
       </div>
-      <div class="panel-qty-block" style="border-right:3px solid var(--border2)">
+      <div class="panel-qty-block">
         <div class="panel-qty-num neutral">${item.system||0}</div>
-        <div class="panel-label">KUANTITI SYSTEM</div>
+        <div class="panel-label">SYSTEM</div>
       </div>
       <div class="panel-qty-block qty-val-diff">
         <div class="panel-qty-num"><span class="diff-chip ${dc}">${dt}</span></div>
-        <div class="panel-label">MISMATCH</div>
+        <div class="panel-label">DIFF</div>
       </div>
     </div>
-    ${item.note?`<div class="panel-note">✎ ${item.note}</div>`:''}
   </div>`;
 }
 
