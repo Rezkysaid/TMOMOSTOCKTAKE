@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockTake Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f0eeff;--surface:#e8e0ff;--card:#fff;--card2:#f5f0ff;
+  --border:#c4b5e8;--border2:#a78bda;
+  --gold:#e09000;--gold2:#f5a800;--teal:#0d9488;
+  --green:#16a34a;--red:#dc2626;--orange:#ea580c;
+  --text:#1e1240;--muted:#7c5fac;--muted2:#5a3d8a;
+  --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;
+  --clay-shadow: 0 8px 0 rgba(0,0,0,0.15);
+  --clay-shadow-sm: 0 4px 0 rgba(0,0,0,0.12);
+  --clay-inset: inset 0 2px 0 rgba(255,255,255,0.6);
+  --body-bg: radial-gradient(ellipse at top, #e8e0ff 0%, #f0eeff 60%);
+}
+
+/* DARK MODE */
+body.dark {
+  --bg:#1a1040;--surface:#231554;--card:#2d1b69;--card2:#3d2580;
+  --border:#4a2f9a;--border2:#5a3db0;
+  --gold:#ffd93d;--gold2:#ffed8a;--teal:#4ecdc4;
+  --green:#6bcb77;--red:#ff6b6b;--orange:#ffa552;
+  --text:#ffffff;--muted:#9b89cc;--muted2:#c4b5e8;
+  --clay-shadow: 0 8px 0 rgba(0,0,0,0.35);
+  --clay-shadow-sm: 0 4px 0 rgba(0,0,0,0.3);
+  --clay-inset: inset 0 2px 0 rgba(255,255,255,0.15);
+  --body-bg: radial-gradient(ellipse at top, #2d1b69 0%, #1a1040 60%);
+}
+
+/* TOGGLE BUTTON */
+.btn-theme {
+  width: 36px; height: 36px;
+  background: var(--card);
+  border: 2px solid var(--border2);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--clay-shadow-sm), var(--clay-inset);
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.btn-theme:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;
+  background-image: var(--body-bg);
+  transition: background 0.3s, color 0.3s;
+}
+
+/* HEADER */
+header{background:var(--surface);border-bottom:3px solid var(--border2);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--clay-shadow);}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:40px;height:40px;background:linear-gradient(135deg,var(--gold),var(--orange));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#000;flex-shrink:0;box-shadow:var(--clay-shadow-sm),var(--clay-inset);border:2px solid rgba(255,255,255,0.2);}
+.logo-text h1{font-size:15px;font-weight:700;background:linear-gradient(90deg,var(--gold),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.logo-text p{font-size:10px;color:var(--muted);font-family:var(--mono);}
+.header-right{display:flex;align-items:center;gap:8px;}
+.sync-pill{display:flex;align-items:center;gap:6px;background:var(--card);border:2px solid var(--border2);padding:6px 12px;border-radius:20px;box-shadow:var(--clay-shadow-sm),var(--clay-inset);}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background 0.3s;}
+.sync-dot.synced{background:var(--green);box-shadow:0 0 6px var(--green);}
+.sync-dot.syncing{background:var(--gold);animation:pulse 1s infinite;}
+.sync-dot.error{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.2}}
+.sync-label{font-size:10px;color:var(--muted2);font-family:var(--mono);}
+.btn-export{background:linear-gradient(160deg,var(--gold),var(--orange));color:#000;border:none;padding:9px 16px;font-family:var(--sans);font-weight:800;font-size:12px;cursor:pointer;border-radius:14px;display:flex;align-items:center;gap:5px;box-shadow:0 5px 0 #b37800,var(--clay-inset);border:2px solid rgba(255,255,255,0.25);letter-spacing:0.3px;}
+
+/* STATS */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;background:var(--bg);border-bottom:3px solid var(--border2);padding:10px 10px 0;}
+.stat-item{background:var(--card);padding:12px 8px;text-align:center;position:relative;overflow:hidden;border-radius:14px 14px 0 0;box-shadow:var(--clay-shadow-sm),var(--clay-inset);border:2px solid var(--border2);border-bottom:none;}
+.stat-item::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:30px;height:2px;border-radius:2px;}
+.stat-item:nth-child(1)::after{background:var(--gold);}
+.stat-item:nth-child(2)::after{background:var(--teal);}
+.stat-item:nth-child(3)::after{background:var(--red);}
+.stat-item:nth-child(4)::after{background:var(--green);}
+.stat-num{font-size:24px;font-weight:900;font-family:var(--mono);color:var(--gold);line-height:1;text-shadow:0 2px 0 rgba(0,0,0,0.3);}
+.stat-item:nth-child(2) .stat-num{color:var(--teal);}
+.stat-item:nth-child(3) .stat-num{color:var(--red);}
+.stat-item:nth-child(4) .stat-num{color:var(--green);}
+.stat-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px;}
+
+/* TABS */
+.cat-section{background:var(--surface);border-bottom:3px solid var(--border2);padding:8px 8px 0;}
+.cat-tabs{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:2px;align-items:center;}
+.cat-tabs::-webkit-scrollbar{display:none;}
+.cat-tab{flex-shrink:0;padding:10px 14px;font-size:13px;font-family:var(--sans);font-weight:700;color:var(--muted2);background:var(--card);border:2px solid var(--border2);border-bottom:none;border-radius:12px 12px 0 0;cursor:pointer;white-space:nowrap;transition:all 0.2s;display:flex;align-items:center;gap:6px;margin-right:4px;box-shadow:0 -3px 0 rgba(0,0,0,0.2) inset;}
+.cat-tab.active{color:var(--gold);background:var(--card2);border-color:var(--gold);box-shadow:0 4px 0 var(--gold) inset;}
+.cat-tab .cnt{background:var(--card2);color:var(--muted2);font-size:10px;padding:1px 6px;border-radius:10px;font-family:var(--mono);}
+.cat-tab.active .cnt{background:rgba(240,180,41,0.15);color:var(--gold);}
+.cat-actions{display:flex;gap:4px;flex-shrink:0;padding:0 6px;}
+.btn-cat-add{width:32px;height:32px;background:rgba(255,217,61,0.15);border:2px solid rgba(255,217,61,0.4);color:var(--gold);border-radius:10px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 rgba(0,0,0,0.25),var(--clay-inset);font-weight:900;}
+.btn-cat-del{width:32px;height:32px;background:rgba(255,107,107,0.15);border:2px solid rgba(255,107,107,0.4);color:var(--red);border-radius:10px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 rgba(0,0,0,0.25),var(--clay-inset);}
+.btn-cat-del.hidden{display:none;}
+
+/* CONTENT */
+.content{padding:16px;padding-bottom:80px;}
+.content-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.content-title{font-size:20px;font-weight:700;background:linear-gradient(90deg,var(--text),var(--muted2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.btn-add-item{background:linear-gradient(160deg,var(--green),#16a34a);color:#fff;border:2px solid rgba(255,255,255,0.2);padding:11px 18px;font-family:var(--sans);font-weight:800;font-size:13px;cursor:pointer;border-radius:16px;display:flex;align-items:center;gap:5px;box-shadow:0 5px 0 #1a5e2a,var(--clay-inset);}
+
+/* SEARCH */
+.search-wrap{display:flex;gap:8px;margin-bottom:14px;}
+.search-input-wrap{flex:1;position:relative;}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none;}
+.search-wrap input{width:100%;background:var(--card);border:2px solid var(--border2);color:var(--text);padding:12px 14px 12px 36px;border-radius:14px;font-family:var(--sans);font-size:13px;outline:none;transition:border-color 0.2s;box-shadow:inset 0 3px 0 rgba(0,0,0,0.2);font-weight:500;}
+.search-wrap input:focus{border-color:var(--gold);box-shadow:inset 0 3px 0 rgba(0,0,0,0.2),0 0 0 3px rgba(255,217,61,0.15);}
+.search-wrap input::placeholder{color:var(--muted);}
+.filter-select{background:var(--card);border:2px solid var(--border2);color:var(--text);padding:12px 10px;border-radius:14px;font-family:var(--sans);font-size:12px;outline:none;-webkit-appearance:none;cursor:pointer;box-shadow:inset 0 3px 0 rgba(0,0,0,0.2);font-weight:600;}
+
+
+/* ITEMS - PANEL/MAGAZINE LAYOUT */
+.items-list{display:flex;flex-direction:column;gap:8px;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.item-card{
+  background:var(--card);
+  border:3px solid #000;
+  border-radius:4px;
+  overflow:hidden;
+  animation:fadeIn 0.2s ease;
+  box-shadow:4px 4px 0 #000;
+}
+
+/* TOP ROW: category badge + item name */
+.panel-row{display:flex;border-bottom:2px solid #000;}
+.panel-row:last-child{border-bottom:none;}
+.panel-row-top{min-height:40px;}
+.panel-cat{
+  flex-shrink:0;width:28%;
+  background:var(--gold);
+  color:#000;
+  font-size:9px;font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  display:flex;align-items:center;justify-content:center;
+  padding:6px 4px;text-align:center;
+  border-right:2px solid #000;
+  line-height:1.2;
+}
+.panel-name{
+  flex:1;
+  font-size:13px;font-weight:700;
+  padding:8px 10px;
+  display:flex;align-items:center;
+  color:var(--text);
+  line-height:1.3;
+}
+
+/* BARCODE ROW */
+.panel-row-barcode{min-height:36px;align-items:center;}
+.panel-barcode-block{
+  flex:1;
+  padding:6px 10px;
+  border-right:2px solid #000;
+}
+.panel-label{
+  font-size:8px;font-weight:900;
+  text-transform:uppercase;letter-spacing:1px;
+  color:var(--muted);
+  font-family:var(--mono);
+}
+.panel-barcode{
+  font-family:var(--mono);
+  font-size:12px;font-weight:700;
+  color:var(--gold);
+  margin-top:2px;
+}
+.panel-actions{
+  display:flex;gap:0;
+  flex-shrink:0;
+}
+
+/* QTY ROW: 3 equal panels */
+.panel-row-qty{min-height:60px;}
+.panel-qty-block{
+  flex:1;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:8px 4px;
+  text-align:center;
+  background:var(--card2);
+}
+.panel-qty-num{
+  font-family:var(--mono);
+  font-size:22px;font-weight:900;
+  line-height:1;
+  color:var(--muted2);
+}
+.panel-qty-num.ok{color:var(--green);}
+.panel-qty-num.low{color:var(--red);}
+.panel-qty-num.warn{color:var(--orange);}
+.panel-qty-num.neutral{color:var(--muted2);}
+.panel-label{
+  font-size:7px;font-weight:900;
+  text-transform:uppercase;letter-spacing:0.8px;
+  color:var(--muted);
+  margin-top:3px;
+  font-family:var(--mono);
+  text-align:center;
+}
+
+/* NOTE */
+.panel-note{
+  padding:6px 10px;
+  font-size:11px;
+  color:var(--muted2);
+  font-style:italic;
+  border-top:2px solid #000;
+  background:var(--surface);
+}
+
+/* BUTTONS */
+.ibtn{width:36px;height:36px;background:var(--surface);border:none;border-left:2px solid #000;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted2);font-weight:700;}
+.ibtn-del{color:var(--red);}
+.ibtn:active{background:var(--card2);}
+
+/* DIFF CHIP */
+.diff-chip{display:inline-flex;align-items:center;padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:16px;font-weight:900;}
+.diff-chip.pos{color:var(--green);}
+.diff-chip.neg{color:var(--red);}
+.diff-chip.zero{color:var(--muted2);}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:50px 20px;display:none;}
+.empty-icon{width:64px;height:64px;background:var(--card);border:1px solid var(--border);border-radius:16px;font-size:28px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+.empty-state h3{font-size:16px;color:var(--muted2);margin-bottom:6px;}
+.empty-state p{font-size:13px;color:var(--muted);}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card);border:3px solid var(--border2);border-top:4px solid var(--gold);border-radius:28px 28px 0 0;padding:8px 20px 40px;width:100%;max-width:520px;animation:sheetUp 0.28s ease;max-height:92vh;overflow-y:auto;box-shadow:0 -8px 30px rgba(0,0,0,0.5);}
+@keyframes sheetUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 18px;}
+.modal h2{font-size:17px;font-weight:700;margin-bottom:18px;color:var(--gold);}
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);margin-bottom:6px;font-family:var(--mono);}
+.form-group input,.form-group select{width:100%;background:var(--surface);border:2px solid var(--border2);color:var(--text);padding:13px 14px;border-radius:14px;font-family:var(--sans);font-size:15px;outline:none;transition:border-color 0.2s;-webkit-appearance:none;box-shadow:inset 0 3px 0 rgba(0,0,0,0.2);font-weight:500;}
+.form-group input:focus,.form-group select:focus{border-color:var(--gold);}
+.form-group input::placeholder{color:var(--muted);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.modal-btns{display:flex;gap:10px;margin-top:22px;}
+.btn-save{flex:1;background:linear-gradient(160deg,var(--gold),var(--orange));color:#000;border:2px solid rgba(255,255,255,0.25);padding:14px;font-family:var(--sans);font-weight:900;font-size:15px;cursor:pointer;border-radius:18px;box-shadow:0 6px 0 #b37800,var(--clay-inset);letter-spacing:0.3px;}
+.btn-cancel{background:var(--surface);border:2px solid var(--border2);color:var(--muted2);padding:14px 20px;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;border-radius:18px;box-shadow:0 4px 0 rgba(0,0,0,0.3),var(--clay-inset);}
+
+/* LOADING */
+.loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px;}
+.spinner-ring{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-family:var(--mono);font-size:12px;color:var(--muted);}
+
+/* WATERMARK */
+.watermark{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:10px;color:var(--muted2);pointer-events:none;z-index:10;white-space:nowrap;background:var(--card);padding:6px 14px;border-radius:20px;border:2px solid var(--border2);box-shadow:0 3px 0 rgba(0,0,0,0.3);font-weight:700;}
+.watermark span{color:var(--gold);}
+
+/* TOAST */
+.toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--card2);border:2px solid var(--border2);color:var(--text);padding:12px 20px;border-radius:20px;font-size:13px;font-weight:700;opacity:0;transition:all 0.3s;z-index:999;white-space:nowrap;box-shadow:0 5px 0 rgba(0,0,0,0.3),var(--clay-inset);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.success{border-color:var(--green);color:var(--green);}
+.toast.error{border-color:var(--red);color:var(--red);}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner-ring"></div>
+  <div class="loading-text">Connecting to database...</div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">S</div>
+    <div class="logo-text">
+      <h1>StockTake Pro</h1>
+      <p id="sessionDate">—</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="btn-theme" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+    <div class="sync-pill">
+      <div class="sync-dot" id="syncDot"></div>
+      <span class="sync-label" id="syncLabel">—</span>
+    </div>
+    <button class="btn-export" onclick="exportData()">↓ CSV</button>
+  </div>
+</header>
+
+<div class="stats-bar">
+  <div class="stat-item"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Items</div></div>
+  <div class="stat-item"><div class="stat-num" id="statCats">0</div><div class="stat-label">Categories</div></div>
+  <div class="stat-item"><div class="stat-num" id="statDiff">0</div><div class="stat-label">Mismatch</div></div>
+  <div class="stat-item"><div class="stat-num" id="statMatch">0</div><div class="stat-label">Matched</div></div>
+</div>
+
+<div class="cat-section">
+  <div style="display:flex;align-items:center;">
+    <div class="cat-tabs" id="catTabs"></div>
+    <div class="cat-actions">
+      <button class="btn-cat-add" onclick="openCatModal()">+</button>
+      <button class="btn-cat-del hidden" id="btnDelCat">🗑</button>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="content-header">
+    <div class="content-title" id="activeCatName">All Items</div>
+    <button class="btn-add-item" onclick="openItemModal()">+ Add Item</button>
+  </div>
+  <div class="search-wrap">
+    <div class="search-input-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="searchInput" placeholder="Search barcode or name..." oninput="renderItems()">
+    </div>
+    <select class="filter-select" id="filterStatus" onchange="renderItems()">
+      <option value="all">All</option>
+      <option value="match">Matched</option>
+      <option value="diff">Mismatch</option>
+    </select>
+  </div>
+  <div class="items-list" id="itemsList"></div>
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">📦</div>
+    <h3>No items yet</h3>
+    <p>Tap <strong>+ Add Item</strong> to start.</p>
+  </div>
+</div>
+
+<div class="watermark">Created by <span>Ali Tmomo</span></div>
+
+<!-- ITEM MODAL -->
+<div class="modal-overlay" id="itemModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="modalItemTitle">+ Add New Item</h2>
+    <div class="form-group"><label>Barcode</label><input type="text" id="fieldBarcode" placeholder="e.g. 8888001234567" inputmode="numeric"></div>
+    <div class="form-group"><label>Item Name</label><input type="text" id="fieldName" placeholder="e.g. Milo 3in1 30g"></div>
+    <div class="form-group"><label>Category</label><select id="fieldCategory"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label>Physical Qty</label><input type="number" id="fieldPhysical" placeholder="0" min="0" inputmode="numeric"></div>
+      <div class="form-group"><label>System Qty</label><input type="number" id="fieldSystem" placeholder="0" min="0" inputmode="numeric"></div>
+    </div>
+    <div class="form-group"><label>Note (Optional)</label><input type="text" id="fieldNote" placeholder="e.g. damaged, missing..."></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeItemModal()">Cancel</button>
+      <button class="btn-save" onclick="saveItem()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY MODAL -->
+<div class="modal-overlay" id="catModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>+ New Category</h2>
+    <div class="form-group"><label>Category Name</label><input type="text" id="fieldCatName" placeholder="e.g. Beverages, Snacks..."></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeCatModal()">Cancel</button>
+      <button class="btn-save" onclick="saveCategory()">Add Category</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, onValue, set, push, remove, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+const app = initializeApp({ databaseURL:'https://stock-tacking-default-rtdb.asia-southeast1.firebasedatabase.app' });
+const db = getDatabase(app);
+
+let state = { categories:[], items:[] };
+let activeCategory = 'all';
+let editingId = null;
+
+document.getElementById('sessionDate').textContent =
+  new Date().toLocaleDateString('en-MY',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+
+function setSyncStatus(s) {
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncLabel');
+  dot.className = 'sync-dot ' + s;
+  lbl.textContent = s==='synced'?'Live':s==='syncing'?'Saving':'Error';
+}
+
+let _isFirstLoad = true;
+
+onValue(ref(db,'stocktaking'), snap => {
+  const data = snap.val() || {};
+  const newCategories = data.categories ? Object.values(data.categories) : [];
+  const newItems = data.items ? Object.entries(data.items).map(([id,v])=>({id,...v})) : [];
+
+  if (!data.categories) {
+    set(ref(db,'stocktaking/categories'),{0:'Beverages',1:'Food',2:'Equipment',3:'Others'});
+  }
+
+  const scrollY = window.scrollY || window.pageYOffset;
+  const catsChanged = JSON.stringify(newCategories) !== JSON.stringify(state.categories);
+  const itemCountChanged = newItems.length !== state.items.length;
+
+  state.categories = newCategories;
+  state.items = newItems;
+  window._stateItems = state.items;
+
+  document.getElementById('loadingOverlay').style.display = 'none';
+  setSyncStatus('synced');
+
+  if (_isFirstLoad) {
+    _isFirstLoad = false;
+    renderAll();
+    return;
+  }
+
+  // Only full re-render if categories changed or item count changed
+  if (catsChanged || itemCountChanged) {
+    renderAll();
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: scrollY, behavior: 'instant' });
+      });
+    });
+    return;
+  }
+
+  // Otherwise just update stats and individual cards in-place
+  updateStats();
+  renderCatTabs();
+
+  // Update individual item cards that changed
+  newItems.forEach(item => {
+    const card = document.querySelector(`[data-item-id="${item.id}"]`);
+    if (card) {
+      const diff = (item.physical||0)-(item.system||0);
+      const dc = diff>0?'pos':diff<0?'neg':'zero';
+      const dt = diff>0?'+'+diff:''+diff;
+      const pc = item.physical<item.system?'low':item.physical>item.system?'warn':'ok';
+      const physEl = card.querySelector('.qty-val-physical');
+      const diffEl = card.querySelector('.qty-val-diff');
+      if (physEl) { physEl.textContent = item.physical||0; physEl.className = 'qty-val qty-val-physical '+pc; }
+      if (diffEl) diffEl.innerHTML = `<span class="diff-chip ${dc}">${dt}</span>`;
+    }
+  });
+
+}, () => {
+  setSyncStatus('error');
+  showToast('Connection failed!','error');
+  document.getElementById('loadingOverlay').style.display = 'none';
+});
+
+function renderAll() { renderCatTabs(); renderItems(); updateStats(); }
+
+window.renderCatTabs = function() {
+  const tabs = document.getElementById('catTabs');
+  const btnDel = document.getElementById('btnDelCat');
+  let html = `<button class="cat-tab ${activeCategory==='all'?'active':''}" onclick="setCategory('all')">All <span class="cnt">${state.items.length}</span></button>`;
+  state.categories.forEach(cat => {
+    const cnt = state.items.filter(i=>i.category===cat).length;
+    const safeCat = cat.replace(/'/g,"\\'");
+    html += `<button class="cat-tab ${activeCategory===cat?'active':''}" onclick="setCategory('${safeCat}')">${cat} <span class="cnt">${cnt}</span></button>`;
+  });
+  tabs.innerHTML = html;
+  btnDel.className = activeCategory!=='all' ? 'btn-cat-del' : 'btn-cat-del hidden';
+  btnDel.onclick = () => deleteCategory(activeCategory);
+  const sel = document.getElementById('fieldCategory');
+  if (sel) sel.innerHTML = state.categories.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+
+let _filteredItems = [];
+let _pageSize = 50;
+let _currentPage = 0;
+
+function itemCardHTML(item) {
+  const diff = (item.physical||0)-(item.system||0);
+  const dc = diff>0?'pos':diff<0?'neg':'zero';
+  const dt = diff>0?'+'+diff:''+diff;
+  const pc = item.physical<item.system?'low':item.physical>item.system?'warn':'ok';
+  const pcColor = item.physical===0?'var(--red)':item.physical===item.system?'var(--green)':'var(--orange)';
+  return `<div class="item-card" data-item-id="${item.id}">
+    <div class="panel-row panel-row-top">
+      <div class="panel-cat">${item.category}</div>
+      <div class="panel-name">${item.name||'—'}</div>
+    </div>
+    <div class="panel-row panel-row-barcode">
+      <div class="panel-barcode-block">
+        <div class="panel-label">BARCODE</div>
+        <div class="panel-barcode">${item.barcode||'—'}</div>
+      </div>
+      <div class="panel-actions">
+        <button class="ibtn" onclick="editItem('${item.id}')">✎</button>
+        <button class="ibtn ibtn-del" onclick="deleteItem('${item.id}')">✕</button>
+      </div>
+    </div>
+    <div class="panel-row panel-row-qty">
+      <div class="panel-qty-block qty-val-physical" style="border-right:3px solid var(--border2)">
+        <div class="panel-qty-num ${pc}" style="color:${pcColor}">${item.physical||0}</div>
+        <div class="panel-label">KUANTITI PHYSICAL</div>
+      </div>
+      <div class="panel-qty-block" style="border-right:3px solid var(--border2)">
+        <div class="panel-qty-num neutral">${item.system||0}</div>
+        <div class="panel-label">KUANTITI SYSTEM</div>
+      </div>
+      <div class="panel-qty-block qty-val-diff">
+        <div class="panel-qty-num"><span class="diff-chip ${dc}">${dt}</span></div>
+        <div class="panel-label">MISMATCH</div>
+      </div>
+    </div>
+    ${item.note?`<div class="panel-note">✎ ${item.note}</div>`:''}
+  </div>`;
+}
+
+window.renderItems = function() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const filter = document.getElementById('filterStatus').value;
+  _filteredItems = state.items.filter(item => {
+    const matchCat = activeCategory==='all' || item.category===activeCategory;
+    const matchSearch = !search || (item.barcode||'').toLowerCase().includes(search) || (item.name||'').toLowerCase().includes(search);
+    const diff = (item.physical||0)-(item.system||0);
+    const matchFilter = filter==='all' || (filter==='match'&&diff===0) || (filter==='diff'&&diff!==0);
+    return matchCat && matchSearch && matchFilter;
+  });
+
+  _currentPage = 0;
+  const list = document.getElementById('itemsList');
+  const empty = document.getElementById('emptyState');
+
+  if (!_filteredItems.length) {
+    list.innerHTML='';
+    empty.style.display='block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  const firstBatch = _filteredItems.slice(0, _pageSize);
+  list.innerHTML = firstBatch.map(itemCardHTML).join('');
+
+  // Add load more button if needed
+  updateLoadMoreBtn();
+}
+
+function updateLoadMoreBtn() {
+  const existing = document.getElementById('loadMoreBtn');
+  if (existing) existing.remove();
+
+  const loaded = (_currentPage + 1) * _pageSize;
+  if (loaded >= _filteredItems.length) return;
+
+  const remaining = _filteredItems.length - loaded;
+  const btn = document.createElement('button');
+  btn.id = 'loadMoreBtn';
+  btn.textContent = `Load ${Math.min(remaining, _pageSize)} more (${remaining} remaining)`;
+  btn.style.cssText = `width:100%;padding:14px;margin-top:10px;background:var(--card);border:2px solid var(--border2);color:var(--muted2);border-radius:14px;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;box-shadow:var(--clay-shadow-sm);`;
+  btn.onclick = loadMore;
+  document.getElementById('itemsList').after(btn);
+}
+
+function loadMore() {
+  _currentPage++;
+  const start = _currentPage * _pageSize;
+  const end = start + _pageSize;
+  const newItems = _filteredItems.slice(start, end);
+  const list = document.getElementById('itemsList');
+  newItems.forEach(item => {
+    list.insertAdjacentHTML('beforeend', itemCardHTML(item));
+  });
+  updateLoadMoreBtn();
+}
+
+window.updateStats = function() {
+  const total = state.items.length;
+  const mm = state.items.filter(i=>(i.physical||0)!==(i.system||0)).length;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statCats').textContent = state.categories.length;
+  document.getElementById('statDiff').textContent = mm;
+  document.getElementById('statMatch').textContent = total-mm;
+}
+
+window.setCategory = function(cat) {
+  activeCategory = cat;
+  document.getElementById('activeCatName').textContent = cat==='all'?'All Items':cat;
+  renderCatTabs(); renderItems();
+}
+
+window.openCatModal = function() {
+  document.getElementById('fieldCatName').value = '';
+  document.getElementById('catModal').classList.add('open');
+}
+window.closeCatModal = function() { document.getElementById('catModal').classList.remove('open'); }
+
+window.saveCategory = async function() {
+  const name = document.getElementById('fieldCatName').value.trim();
+  if (!name) return;
+  if (state.categories.includes(name)) { showToast('Already exists!','error'); return; }
+  setSyncStatus('syncing');
+  try {
+    const obj = {};
+    [...state.categories,name].forEach((c,i)=>obj[i]=c);
+    await set(ref(db,'stocktaking/categories'),obj);
+    showToast('"'+name+'" added!','success');
+  } catch(e) { setSyncStatus('error'); showToast('Failed!','error'); }
+  closeCatModal();
+}
+
+window.deleteCategory = async function(cat) {
+  const cnt = state.items.filter(i=>i.category===cat).length;
+  if (!confirm(cnt>0?`Delete "${cat}"? ${cnt} item(s) will also be deleted.`:`Delete "${cat}"?`)) return;
+  setSyncStatus('syncing');
+  try {
+    for (const item of state.items.filter(i=>i.category===cat)) await remove(ref(db,`stocktaking/items/${item.id}`));
+    const newCats = state.categories.filter(c=>c!==cat);
+    const obj = {}; newCats.forEach((c,i)=>obj[i]=c);
+    await set(ref(db,'stocktaking/categories'),newCats.length?obj:null);
+    activeCategory = 'all';
+    document.getElementById('activeCatName').textContent = 'All Items';
+    showToast('"'+cat+'" deleted!','success');
+  } catch(e) { setSyncStatus('error'); showToast('Failed!','error'); }
+}
+
+function lockBodyScroll() {
+  window._lockedScrollY = window.scrollY || window.pageYOffset;
+  document.body.style.position = 'fixed';
+  document.body.style.top = '-' + window._lockedScrollY + 'px';
+  document.body.style.width = '100%';
+}
+
+window.openItemModal = function() {
+  editingId = null;
+  document.getElementById('modalItemTitle').textContent = '+ Add New Item';
+  ['fieldBarcode','fieldName','fieldPhysical','fieldSystem','fieldNote'].forEach(id=>document.getElementById(id).value='');
+  if (activeCategory!=='all') document.getElementById('fieldCategory').value = activeCategory;
+  lockBodyScroll();
+  document.getElementById('itemModal').classList.add('open');
+}
+window.closeItemModal = function() {
+  document.getElementById('itemModal').classList.remove('open');
+  editingId = null;
+  if (window._lockedScrollY !== undefined) {
+    const y = window._lockedScrollY;
+    window._lockedScrollY = undefined;
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    window.scrollTo(0, y);
+  }
+}
+
+window.editItem = function(id) {
+  const item = state.items.find(i=>i.id===id);
+  if (!item) return;
+  editingId = id;
+  document.getElementById('modalItemTitle').textContent = '✎ Edit Item';
+  document.getElementById('fieldBarcode').value = item.barcode||'';
+  document.getElementById('fieldName').value = item.name||'';
+  document.getElementById('fieldCategory').value = item.category;
+  document.getElementById('fieldPhysical').value = item.physical||0;
+  document.getElementById('fieldSystem').value = item.system||0;
+  document.getElementById('fieldNote').value = item.note||'';
+  lockBodyScroll();
+  document.getElementById('itemModal').classList.add('open');
+}
+
+window.saveItem = async function() {
+  const barcode = document.getElementById('fieldBarcode').value.trim();
+  const name = document.getElementById('fieldName').value.trim();
+  const category = document.getElementById('fieldCategory').value;
+  const physical = parseInt(document.getElementById('fieldPhysical').value)||0;
+  const system = parseInt(document.getElementById('fieldSystem').value)||0;
+  const note = document.getElementById('fieldNote').value.trim();
+  if (!name) { showToast('Name required!','error'); return; }
+
+  closeItemModal();
+  setSyncStatus('syncing');
+  try {
+    if (editingId) {
+      await update(ref(db,`stocktaking/items/${editingId}`),{barcode,name,category,physical,system,note});
+      showToast('Updated!','success');
+    } else {
+      await push(ref(db,'stocktaking/items'),{barcode,name,category,physical,system,note,addedAt:new Date().toISOString()});
+      showToast('Added!','success');
+    }
+
+  } catch(e) { setSyncStatus('error'); showToast('Failed!','error'); }
+}
+
+window.deleteItem = async function(id) {
+  if (!confirm('Delete this item?')) return;
+  setSyncStatus('syncing');
+  try { await remove(ref(db,`stocktaking/items/${id}`)); showToast('Deleted.','success'); }
+  catch(e) { setSyncStatus('error'); showToast('Failed!','error'); }
+}
+
+window._savePhysical = async function(id, physical, cb) {
+  setSyncStatus('syncing');
+  try {
+    await update(ref(db,`stocktaking/items/${id}`),{physical});
+    setSyncStatus('synced');
+    if (cb) cb();
+  } catch(e) { setSyncStatus('error'); showToast('Failed!','error'); }
+}
+
+window.exportData = function() {
+  const today = new Date().toLocaleDateString('en-MY',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const headers = ['\u5546\u54c1\u540d\u79f0','\u6761\u7801','\u5546\u54c1\u5206\u7c7b','\u5e93\u5b58','Shop physical Stock'];
+  const rows = state.items.map(item=>[item.name||'',item.barcode||'',item.category||'',item.system||0,item.physical||0]);
+  const csv = '\uFEFF' + [headers,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const filename = 'TMOMO_Taman_Connaught_StockTake_'+today.replace(/\//g,'-')+'.csv';
+  const file = new File([blob],filename,{type:'text/csv'});
+  if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
+    navigator.share({files:[file],title:'StockTake Export'}).catch(()=>dlBlob(blob,filename));
+  } else { dlBlob(blob,filename); }
+}
+
+function dlBlob(blob,filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Exported!','success');
+}
+
+window.showToast = function(msg,type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast '+(type||'');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+['itemModal','catModal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',e=>{
+    if (e.target.id===id){ closeItemModal(); closeCatModal(); }
+  });
+});
+</script>
+
+<script>
+(function() {
+  var saved = 'light';
+  try { saved = localStorage.getItem('theme') || 'light'; } catch(e) {}
+  if (saved === 'dark') {
+    document.body.classList.add('dark');
+    var b = document.getElementById('themeToggle');
+    if (b) b.textContent = '\u2600\uFE0F';
+  }
+})();
+
+function toggleTheme() {
+  var isDark = document.body.classList.toggle('dark');
+  var btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = isDark ? '\u2600\uFE0F' : '\uD83C\uDF19';
+  try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch(e) {}
+}
+</script>
+</body>
+</html>
