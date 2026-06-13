@@ -514,11 +514,22 @@ onValue(ref(db,'stocktaking'), snap => {
       const diff = (item.physical||0)-(item.system||0);
       const dc = diff>0?'pos':diff<0?'neg':'zero';
       const dt = diff>0?'+'+diff:''+diff;
-      const pc = item.physical<item.system?'low':item.physical>item.system?'warn':'ok';
-      const physEl = card.querySelector('.qty-val-physical');
-      const diffEl = card.querySelector('.qty-val-diff');
-      if (physEl) { physEl.textContent = item.physical||0; physEl.className = 'qty-val qty-val-physical '+pc; }
-      if (diffEl) diffEl.innerHTML = `<span class="diff-chip ${dc}">${dt}</span>`;
+      const pc = item.physical===0?'low':item.physical===item.system?'ok':'warn';
+
+      // Update physical qty block
+      const physBlock = card.querySelector('.qty-val-physical');
+      if (physBlock) {
+        physBlock.textContent = item.physical||0;
+        physBlock.className = 'panel-qty-num qty-val-physical ' + pc;
+      }
+
+      // Update diff block
+      const diffBlock = card.querySelector('.qty-val-diff');
+      if (diffBlock) {
+        diffBlock.innerHTML = `<span class="diff-chip ${dc}">${dt}</span>`;
+      }
+    } else {
+      // Card not found in DOM (might be lazy-loaded away) - just update state, no duplicate
     }
   });
 
@@ -569,16 +580,16 @@ function itemCardHTML(item) {
       </div>
     </div>
     <div class="panel-bottom">
-      <div class="panel-qty-block qty-val-physical">
-        <div class="panel-qty-num ${pc}">${item.physical||0}</div>
+      <div class="panel-qty-block">
+        <div class="panel-qty-num qty-val-physical ${pc}">${item.physical||0}</div>
         <div class="panel-label">PHYSICAL</div>
       </div>
       <div class="panel-qty-block">
         <div class="panel-qty-num neutral">${item.system||0}</div>
         <div class="panel-label">SYSTEM</div>
       </div>
-      <div class="panel-qty-block qty-val-diff">
-        <div class="panel-qty-num"><span class="diff-chip ${dc}">${dt}</span></div>
+      <div class="panel-qty-block">
+        <div class="panel-qty-num qty-val-diff"><span class="diff-chip ${dc}">${dt}</span></div>
         <div class="panel-label">DIFF</div>
       </div>
     </div>
