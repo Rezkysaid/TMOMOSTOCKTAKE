@@ -389,7 +389,7 @@ header{background:rgba(13,148,136,0.92);backdrop-filter:blur(8px);padding:12px 1
   <div class="search-wrap">
     <div class="search-input-wrap">
       <span class="search-icon">⌕</span>
-      <input type="text" id="searchInput" placeholder="Search barcode or name..." oninput="renderItems()">
+      <input type="text" id="searchInput" placeholder="Search barcode or name..." inputmode="numeric" pattern="[0-9]*" oninput="renderItems()">
     </div>
     <select class="filter-select" id="filterStatus" onchange="renderItems()">
       <option value="all">All</option>
