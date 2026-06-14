@@ -528,6 +528,12 @@ onValue(ref(db,'stocktaking'), snap => {
       if (diffBlock) {
         diffBlock.innerHTML = `<span class="diff-chip ${dc}">${dt}</span>`;
       }
+
+      // Update timestamp
+      const tsEl = card.querySelector('.item-timestamp');
+      if (tsEl && (item.updatedAt||item.addedAt)) {
+        tsEl.textContent = '🕐 ' + formatDate(item.updatedAt||item.addedAt);
+      }
     } else {
       // Card not found in DOM (might be lazy-loaded away) - just update state, no duplicate
     }
@@ -573,6 +579,7 @@ function itemCardHTML(item) {
         <div class="panel-barcode">${item.barcode||'No barcode'}</div>
         <div class="panel-cat-badge">${item.category}</div>
         ${item.note?`<div style="font-size:10px;color:rgba(255,255,255,0.6);margin-top:4px;font-style:italic">✎ ${item.note}</div>`:''}
+        ${(item.updatedAt||item.addedAt)?`<div class="item-timestamp" style="font-size:9px;color:rgba(255,255,255,0.45);margin-top:5px;font-family:monospace;letter-spacing:0.3px">🕐 ${formatDate(item.updatedAt||item.addedAt)}</div>`:''}
       </div>
       <div class="panel-actions">
         <button class="ibtn" onclick="editItem('${item.id}')">✎</button>
@@ -720,6 +727,22 @@ window.deleteCategory = async function(cat) {
   } catch(e) { setSyncStatus('error'); showToast('Failed!','error'); }
 }
 
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const day = days[d.getDay()];
+  const date = d.getDate();
+  const month = months[d.getMonth()];
+  const year = d.getFullYear();
+  let hours = d.getHours();
+  const mins = String(d.getMinutes()).padStart(2,'0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  return `${day}, ${date} ${month} ${year} · ${hours}:${mins} ${ampm}`;
+}
+
 function lockBodyScroll() {
   window._lockedScrollY = window.scrollY || window.pageYOffset;
   document.body.style.position = 'fixed';
@@ -775,11 +798,12 @@ window.saveItem = async function() {
   closeItemModal();
   setSyncStatus('syncing');
   try {
+    const now = new Date().toISOString();
     if (editingId) {
-      await update(ref(db,`stocktaking/items/${editingId}`),{barcode,name,category,physical,system,note});
+      await update(ref(db,`stocktaking/items/${editingId}`),{barcode,name,category,physical,system,note,updatedAt:now});
       showToast('Updated!','success');
     } else {
-      await push(ref(db,'stocktaking/items'),{barcode,name,category,physical,system,note,addedAt:new Date().toISOString()});
+      await push(ref(db,'stocktaking/items'),{barcode,name,category,physical,system,note,addedAt:now,updatedAt:now});
       showToast('Added!','success');
     }
 
