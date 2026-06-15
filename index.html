@@ -571,6 +571,7 @@ body.dark .chat-name-input { background: #0d1228; border-color: #1e2d52; color: 
   </div>
   <div class="header-right">
     <button class="btn-theme" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+    <button class="btn-theme" id="btnSummary" title="Send summary to chat" style="font-size:14px;">📊</button>
     <div class="sync-pill">
       <div class="sync-dot" id="syncDot"></div>
       <span class="sync-label" id="syncLabel">—</span>
@@ -1140,7 +1141,8 @@ window.sendSummaryToChat = function() {
 };
 
 // Forward button - event delegation on itemsList
-document.getElementById('itemsList').addEventListener('click', e => {
+const _itemsList = document.getElementById('itemsList');
+if (_itemsList) _itemsList.addEventListener('click', e => {
   // Walk up DOM tree to find button with data-fwd
   let el = e.target;
   let fwdBtn = null;
@@ -1170,7 +1172,8 @@ document.getElementById('itemsList').addEventListener('click', e => {
 });
 
 // Summary button
-document.getElementById('btnSummary').addEventListener('click', () => {
+const _btnSum = document.getElementById('btnSummary');
+if (_btnSum) _btnSum.addEventListener('click', () => {
   const items = window._stateItems || [];
   const total = items.length;
   const matched = items.filter(i => (i.physical||0) > 0 && (i.physical||0) === (i.system||0)).length;
