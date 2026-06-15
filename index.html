@@ -1150,12 +1150,12 @@ setTimeout(startChatListener, 2000);
 </script>
 
 <!-- CHAT FAB -->
-<button class="chat-fab" id="chatFab" onclick="openChat()">💬
+<button class="chat-fab" id="chatFab">💬
   <span class="chat-badge" id="chatBadge"></span>
 </button>
 
 <!-- CHAT OVERLAY -->
-<div class="chat-overlay" id="chatOverlay" onclick="if(event.target===this)closeChat()">
+<div class="chat-overlay" id="chatOverlay" id="chatOverlay">
   <div class="chat-panel">
     <div class="chat-header">
       <div class="chat-header-info">
@@ -1165,7 +1165,7 @@ setTimeout(startChatListener, 2000);
           <div class="chat-header-sub" id="chatOnlineCount">TMOMO Stock Taking</div>
         </div>
       </div>
-      <button class="chat-close" onclick="closeChat()">✕</button>
+      <button class="chat-close" id="chatCloseBtn">✕</button>
     </div>
     <div class="chat-name-row">
       <input class="chat-name-input" id="chatNameInput" placeholder="Your name (e.g. Ali, Sarah...)" maxlength="20">
@@ -1178,7 +1178,7 @@ setTimeout(startChatListener, 2000);
     </div>
     <div class="chat-input-row">
       <textarea class="chat-text-input" id="chatInput" placeholder="Type a message..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
-      <button class="chat-send-btn" onclick="sendChat()">➤</button>
+      <button class="chat-send-btn" id="chatSendBtn">➤</button>
     </div>
   </div>
 </div>
@@ -1204,5 +1204,19 @@ function toggleTheme() {
   if (btn) btn.textContent = isDark ? '\u2600\uFE0F' : '\uD83C\uDF19';
   try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch(e) {}
 }
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var fab = document.getElementById('chatFab');
+  var overlay = document.getElementById('chatOverlay');
+  var closeBtn = document.getElementById('chatCloseBtn');
+  var sendBtn = document.getElementById('chatSendBtn');
+  if (fab) fab.addEventListener('click', function() { if (window.openChat) window.openChat(); });
+  if (closeBtn) closeBtn.addEventListener('click', function() { if (window.closeChat) window.closeChat(); });
+  if (overlay) overlay.addEventListener('click', function(e) { if (e.target===overlay && window.closeChat) window.closeChat(); });
+  if (sendBtn) sendBtn.addEventListener('click', function() { if (window.sendChat) window.sendChat(); });
+  var ci = document.getElementById('chatInput');
+  if (ci) ci.addEventListener('keydown', function(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(window.sendChat)window.sendChat();} });
+});
 </body>
 </html>
