@@ -1199,7 +1199,17 @@ function loadChat() {
         });
         msgs.sort(function(a,b) { return (a.ts||0)-(b.ts||0); });
       }
-      renderChat(msgs);
+      lastFbMsgs = msgs;
+
+      // Remove pending messages that are now confirmed in firebase
+      pendingMsgs = pendingMsgs.filter(function(p) {
+        var confirmed = msgs.some(function(m) {
+          return m.text === p.text && m.sender === p.sender && Math.abs((m.ts||0) - p.ts) < 5000;
+        });
+        return !confirmed;
+      });
+
+      redrawChat();
       if (!chatOpen && msgs.length > lastCount && lastCount > 0) {
         var badge = document.getElementById('chatBadge');
         badge.textContent = msgs.length - lastCount;
@@ -1270,6 +1280,8 @@ function renderChat(msgs) {
   if (near || chatOpen) container.scrollTop = container.scrollHeight;
 }
 
+var pendingMsgs = [];
+
 function sendChat() {
   var input = document.getElementById('chatInput');
   var nameInput = document.getElementById('chatNameInput');
@@ -1280,11 +1292,12 @@ function sendChat() {
   try { localStorage.setItem('chatName', name); } catch(e) {}
   input.value = '';
 
-  // Instantly show message in UI
   var now = new Date();
-  var time = now.toLocaleTimeString('en-MY', {hour:'2-digit', minute:'2-digit'});
-  var tempMsg = { text: msg, sender: name, time: now.toISOString(), ts: now.getTime(), _key: '_temp_' + now.getTime() };
-  appendChatMsg(tempMsg, true);
+  var pending = { text: msg, sender: name, time: now.toISOString(), ts: now.getTime(), _key: '_pending_' + now.getTime() };
+  pendingMsgs.push(pending);
+
+  // Re-render immediately with pending message included
+  redrawChat();
 
   // Send to Firebase
   fetch(DB + '.json', {
@@ -1292,8 +1305,27 @@ function sendChat() {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ text: msg, sender: name, time: now.toISOString(), ts: now.getTime() })
   }).then(function() {
-    setTimeout(loadChat, 800); // wait 800ms for Firebase to confirm
-  }).catch(function() {});
+    setTimeout(loadChat, 600);
+  }).catch(function() {
+    setTimeout(loadChat, 600);
+  });
+}
+
+// Cache last loaded firebase messages
+var lastFbMsgs = [];
+
+function redrawChat() {
+  // Merge firebase messages + pending (not yet confirmed) messages
+  var merged = lastFbMsgs.slice();
+  pendingMsgs.forEach(function(p) {
+    // Check if this pending msg already exists in firebase data (confirmed)
+    var confirmed = lastFbMsgs.some(function(m) {
+      return m.text === p.text && m.sender === p.sender && Math.abs((m.ts||0) - p.ts) < 5000;
+    });
+    if (!confirmed) merged.push(p);
+  });
+  merged.sort(function(a,b) { return (a.ts||0)-(b.ts||0); });
+  renderChat(merged);
 }
 
 function appendChatMsg(msg, mine) {
