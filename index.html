@@ -1065,88 +1065,6 @@ window.showToast = function(msg,type) {
   });
 });
 
-// ===== TEAM CHAT (inside module - has access to push/ref/onValue/db) =====
-const CHAT_REF = 'stocktaking/chat';
-let chatOpen = false;
-let lastSeenMsgCount = 0;
-let chatName = '';
-let _chatListening = false;
-
-window.openChat = function() {
-  chatOpen = true;
-  document.getElementById('chatOverlay').classList.add('open');
-  document.getElementById('chatBadge').classList.remove('show');
-  try { chatName = localStorage.getItem('chatName') || ''; } catch(e) {}
-  if (chatName) document.getElementById('chatNameInput').value = chatName;
-  startChatListener();
-  setTimeout(() => {
-    const msgs = document.getElementById('chatMessages');
-    msgs.scrollTop = msgs.scrollHeight;
-  }, 150);
-}
-
-window.closeChat = function() {
-  chatOpen = false;
-  document.getElementById('chatOverlay').classList.remove('open');
-}
-
-window.sendChat = async function() {
-  const input = document.getElementById('chatInput');
-  const nameInput = document.getElementById('chatNameInput');
-  const msg = input.value.trim();
-  const name = nameInput.value.trim() || 'Anonymous';
-  if (!msg) return;
-  chatName = name;
-  try { localStorage.setItem('chatName', name); } catch(e) {}
-  input.value = '';
-  try {
-    await push(ref(db, CHAT_REF), {
-      text: msg, sender: name,
-      time: new Date().toISOString(), ts: Date.now()
-    });
-  } catch(e) { showToast('Failed to send!','error'); }
-}
-
-function startChatListener() {
-  if (_chatListening) return;
-  _chatListening = true;
-  onValue(ref(db, CHAT_REF), snap => {
-    const data = snap.val() || {};
-    const msgs = Object.values(data).sort((a,b)=>(a.ts||0)-(b.ts||0));
-    renderChatMsgs(msgs);
-    if (!chatOpen && msgs.length > lastSeenMsgCount && lastSeenMsgCount > 0) {
-      const badge = document.getElementById('chatBadge');
-      badge.textContent = msgs.length - lastSeenMsgCount;
-      badge.classList.add('show');
-    }
-    if (!chatOpen) lastSeenMsgCount = msgs.length;
-  });
-}
-
-function renderChatMsgs(msgs) {
-  const container = document.getElementById('chatMessages');
-  const empty = document.getElementById('chatEmpty');
-  const myName = document.getElementById('chatNameInput')?.value.trim() || chatName;
-  if (!msgs.length) { empty.style.display='flex'; return; }
-  empty.style.display = 'none';
-  const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
-  container.innerHTML = '';
-  msgs.forEach(msg => {
-    const isMine = msg.sender === myName;
-    const time = msg.time ? new Date(msg.time).toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'}) : '';
-    const div = document.createElement('div');
-    div.className = 'chat-msg ' + (isMine ? 'mine' : 'theirs');
-    div.innerHTML = `<div class="chat-bubble">${esc(msg.text)}</div><div class="chat-meta">${isMine?'':esc(msg.sender)+' · '}${time}</div>`;
-    container.appendChild(div);
-  });
-  if (nearBottom || chatOpen) container.scrollTop = container.scrollHeight;
-}
-
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-// Start chat listener after 2s
-setTimeout(startChatListener, 2000);
-// ===== END CHAT =====
 </script>
 
 <!-- CHAT FAB -->
@@ -1206,18 +1124,99 @@ function toggleTheme() {
 }
 </script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  var fab = document.getElementById('chatFab');
-  var overlay = document.getElementById('chatOverlay');
-  var closeBtn = document.getElementById('chatCloseBtn');
-  var sendBtn = document.getElementById('chatSendBtn');
-  if (fab) fab.addEventListener('click', function() { if (window.openChat) window.openChat(); });
-  if (closeBtn) closeBtn.addEventListener('click', function() { if (window.closeChat) window.closeChat(); });
-  if (overlay) overlay.addEventListener('click', function(e) { if (e.target===overlay && window.closeChat) window.closeChat(); });
-  if (sendBtn) sendBtn.addEventListener('click', function() { if (window.sendChat) window.sendChat(); });
-  var ci = document.getElementById('chatInput');
-  if (ci) ci.addEventListener('keydown', function(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(window.sendChat)window.sendChat();} });
+// TEAM CHAT - Pure REST API, no module dependency
+var DB = 'https://stock-tacking-default-rtdb.asia-southeast1.firebasedatabase.app/stocktaking/chat';
+var chatOpen = false;
+var lastCount = 0;
+var myChatName = '';
+var chatPollInterval = null;
+
+try { myChatName = localStorage.getItem('chatName') || ''; } catch(e) {}
+
+function openChat() {
+  chatOpen = true;
+  document.getElementById('chatOverlay').classList.add('open');
+  document.getElementById('chatBadge').classList.remove('show');
+  document.getElementById('chatBadge').textContent = '';
+  if (myChatName) document.getElementById('chatNameInput').value = myChatName;
+  loadChat();
+  if (!chatPollInterval) chatPollInterval = setInterval(loadChat, 3000);
+}
+
+function closeChat() {
+  chatOpen = false;
+  document.getElementById('chatOverlay').classList.remove('open');
+}
+
+function loadChat() {
+  fetch(DB + '.json')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var msgs = [];
+      if (data) {
+        Object.values(data).forEach(function(m) { if(m && m.text) msgs.push(m); });
+        msgs.sort(function(a,b) { return (a.ts||0)-(b.ts||0); });
+      }
+      renderChat(msgs);
+      if (!chatOpen && msgs.length > lastCount && lastCount > 0) {
+        var badge = document.getElementById('chatBadge');
+        badge.textContent = msgs.length - lastCount;
+        badge.classList.add('show');
+      }
+      if (!chatOpen) lastCount = msgs.length;
+    })
+    .catch(function() {});
+}
+
+function renderChat(msgs) {
+  var container = document.getElementById('chatMessages');
+  var empty = document.getElementById('chatEmpty');
+  var myName = document.getElementById('chatNameInput').value.trim() || myChatName;
+  if (!msgs.length) { empty.style.display='flex'; return; }
+  empty.style.display = 'none';
+  var near = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+  container.innerHTML = '';
+  msgs.forEach(function(msg) {
+    var mine = msg.sender === myName;
+    var time = msg.time ? new Date(msg.time).toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'}) : '';
+    var div = document.createElement('div');
+    div.className = 'chat-msg ' + (mine ? 'mine' : 'theirs');
+    div.innerHTML = '<div class="chat-bubble">' + esc(msg.text) + '</div>' +
+      '<div class="chat-meta">' + (mine ? '' : esc(msg.sender) + ' · ') + time + '</div>';
+    container.appendChild(div);
+  });
+  if (near || chatOpen) container.scrollTop = container.scrollHeight;
+}
+
+function sendChat() {
+  var input = document.getElementById('chatInput');
+  var nameInput = document.getElementById('chatNameInput');
+  var msg = input.value.trim();
+  var name = nameInput.value.trim() || 'Anonymous';
+  if (!msg) return;
+  myChatName = name;
+  try { localStorage.setItem('chatName', name); } catch(e) {}
+  input.value = '';
+  fetch(DB + '.json', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ text: msg, sender: name, time: new Date().toISOString(), ts: Date.now() })
+  }).then(function() { loadChat(); }).catch(function() {});
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Wire up buttons
+document.getElementById('chatFab').addEventListener('click', openChat);
+document.getElementById('chatCloseBtn').addEventListener('click', closeChat);
+document.getElementById('chatOverlay').addEventListener('click', function(e) { if(e.target===this) closeChat(); });
+document.getElementById('chatSendBtn').addEventListener('click', sendChat);
+document.getElementById('chatInput').addEventListener('keydown', function(e) {
+  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
 });
+
+// Poll for new messages in background
+setInterval(loadChat, 5000);
 </script>
 </body>
 </html>
