@@ -815,7 +815,7 @@ function itemCardHTML(item) {
         ${(item.updatedAt||item.addedAt)?`<div class="item-timestamp">🕐 ${formatDate(item.updatedAt||item.addedAt)}</div>`:''}
       </div>
       <div class="panel-actions">
-        <button class="ibtn ibtn-fwd" onclick="window.forwardToChat('${item.id}')" title="Share to chat">📤</button>
+        <button class="ibtn ibtn-fwd" data-fwd="${item.id}" title="Share to chat">📤</button>
         <button class="ibtn" onclick="editItem('${item.id}')">✎</button>
         <button class="ibtn ibtn-del" onclick="deleteItem('${item.id}')">✕</button>
       </div>
@@ -1138,6 +1138,44 @@ window.sendSummaryToChat = function() {
   document.getElementById('chatOverlay').classList.add('open');
   showToast('Summary ready! Tap ➤ to send.', 'success');
 };
+
+// Forward button - event delegation on itemsList
+document.getElementById('itemsList').addEventListener('click', e => {
+  const btn = e.target.closest('[data-fwd]');
+  if (!btn) return;
+  const itemId = btn.dataset.fwd;
+  const items = window._stateItems || [];
+  const snap = items.find(i => i.id === itemId);
+  if (!snap) return;
+  const physical = snap.physical || 0;
+  const system = snap.system || 0;
+  const diff = physical - system;
+  const diffStr = diff > 0 ? '+'+diff : String(diff);
+  const status = diff === 0 ? '✅ Matched' : (physical === 0 ? '🔴 Uncounted' : '⚠️ Mismatch');
+  const msg = '📦 ' + (snap.category||'No Category') + '\n' +
+    snap.name + '\n' + '🔢 ' + (snap.barcode||'-') + '\n' +
+    'Physical: ' + physical + ' | System: ' + system + ' | Diff: ' + diffStr + '\n' + status;
+  document.getElementById('chatInput').value = msg;
+  document.getElementById('chatOverlay').classList.add('open');
+  showToast('Item forwarded! Tap ➤ to send.', 'success');
+});
+
+// Summary button
+document.getElementById('btnSummary').addEventListener('click', () => {
+  const items = window._stateItems || [];
+  const total = items.length;
+  const matched = items.filter(i => (i.physical||0) > 0 && (i.physical||0) === (i.system||0)).length;
+  const mismatch = items.filter(i => (i.physical||0) > 0 && (i.physical||0) !== (i.system||0)).length;
+  const uncounted = items.filter(i => !(i.physical||0)).length;
+  const pct = total ? Math.round(items.filter(i=>(i.physical||0)>0).length/total*100) : 0;
+  const msg = '📊 STOCK TAKE SUMMARY\n━━━━━━━━━━━━━━\n' +
+    '📦 Total: ' + total + ' items\n✅ Matched: ' + matched +
+    '\n⚠️ Mismatch: ' + mismatch + '\n🔴 Uncounted: ' + uncounted +
+    '\n📈 Progress: ' + pct + '%\n⏰ ' + new Date().toLocaleString('en-MY');
+  document.getElementById('chatInput').value = msg;
+  document.getElementById('chatOverlay').classList.add('open');
+  showToast('Summary ready! Tap ➤ to send.', 'success');
+});
 
 </script>
 
