@@ -1292,7 +1292,7 @@ function sendChat() {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ text: msg, sender: name, time: now.toISOString(), ts: now.getTime() })
   }).then(function() {
-    loadChat(); // refresh to get real key
+    setTimeout(loadChat, 800); // wait 800ms for Firebase to confirm
   }).catch(function() {});
 }
 
