@@ -1118,12 +1118,11 @@ window.showToast = function(msg,type) {
     <div class="chat-name-row">
       <input class="chat-name-input" id="chatNameInput" placeholder="Your name (e.g. Ali, Ahmad...)" maxlength="20">
     </div>
-    <div class="chat-messages" id="chatMessages">
-      <div class="chat-empty" id="chatEmpty">
-        <div class="icon">💬</div>
-        <p>No messages yet. Start the conversation!</p>
-      </div>
+    <div class="chat-empty" id="chatEmpty">
+      <div class="icon">💬</div>
+      <p>No messages yet. Start the conversation!</p>
     </div>
+    <div class="chat-messages" id="chatMessages"></div>
     <div class="chat-input-row">
       <textarea class="chat-text-input" id="chatInput" placeholder="Type a message..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
       <button class="chat-send-btn" id="chatSendBtn">➤</button>
@@ -1178,10 +1177,29 @@ function closeChat() {
   document.getElementById('chatOverlay').classList.remove('open');
 }
 
-// ===== ROBUST INCREMENTAL CHAT =====
-var renderedKeys = {};   // firebase keys already in DOM
-var pendingDivs = {};    // pending text -> div element (waiting for firebase)
-var chatFirstRender = true;
+// ===== TEAM CHAT =====
+var DB = 'https://stock-tacking-default-rtdb.asia-southeast1.firebasedatabase.app/stocktaking/chat';
+var chatOpen = false;
+var lastCount = 0;
+var myChatName = '';
+var renderedKeys = {};
+var pendingDivs = {};
+
+try { myChatName = localStorage.getItem('chatName') || ''; } catch(e) {}
+
+function openChat() {
+  chatOpen = true;
+  document.getElementById('chatOverlay').classList.add('open');
+  document.getElementById('chatBadge').classList.remove('show');
+  document.getElementById('chatBadge').textContent = '';
+  if (myChatName) document.getElementById('chatNameInput').value = myChatName;
+  loadChat();
+}
+
+function closeChat() {
+  chatOpen = false;
+  document.getElementById('chatOverlay').classList.remove('open');
+}
 
 function loadChat() {
   fetch(DB + '.json')
@@ -1189,14 +1207,58 @@ function loadChat() {
     .then(function(data) {
       var msgs = [];
       if (data) {
-        Object.entries(data).forEach(function(entry) {
-          var key = entry[0]; var m = entry[1];
-          if (m && m.text) { m._key = key; msgs.push(m); }
+        Object.entries(data).forEach(function(e) {
+          var m = e[1];
+          if (m && m.text) { m._key = e[0]; msgs.push(m); }
         });
         msgs.sort(function(a,b) { return (a.ts||0)-(b.ts||0); });
       }
-      syncChatDOM(msgs);
 
+      var container = document.getElementById('chatMessages');
+      var empty = document.getElementById('chatEmpty');
+      var myName = document.getElementById('chatNameInput').value.trim() || myChatName;
+
+      // Build set of firebase keys
+      var fbKeySet = {};
+      msgs.forEach(function(m) { fbKeySet[m._key] = true; });
+
+      // Remove deleted messages from DOM
+      Object.keys(renderedKeys).forEach(function(k) {
+        if (!fbKeySet[k]) {
+          var el = container.querySelector('[data-fbkey="'+k+'"]');
+          if (el) el.remove();
+          delete renderedKeys[k];
+        }
+      });
+
+      // Add new messages
+      msgs.forEach(function(m) {
+        if (renderedKeys[m._key]) return;
+        var mine = m.sender === myName;
+
+        // Upgrade pending div if exists
+        if (mine) {
+          var pkey = 'p_' + m.text + '_' + m.sender;
+          if (pendingDivs[pkey]) {
+            pendingDivs[pkey].dataset.fbkey = m._key;
+            var db = pendingDivs[pkey].querySelector('.chat-del-btn');
+            if (db) db.dataset.key = m._key;
+            renderedKeys[m._key] = true;
+            delete pendingDivs[pkey];
+            return;
+          }
+        }
+
+        var div = makeDiv(m, mine, m._key);
+        container.appendChild(div);
+        renderedKeys[m._key] = true;
+      });
+
+      var hasContent = container.children.length > 0;
+      empty.style.display = hasContent ? 'none' : 'flex';
+      if (hasContent) container.scrollTop = container.scrollHeight;
+
+      // Badge logic
       if (!chatOpen && msgs.length > lastCount && lastCount > 0) {
         var badge = document.getElementById('chatBadge');
         badge.textContent = msgs.length - lastCount;
@@ -1207,64 +1269,43 @@ function loadChat() {
     .catch(function() {});
 }
 
-function syncChatDOM(msgs) {
+function sendChat() {
+  var input = document.getElementById('chatInput');
+  var nameInput = document.getElementById('chatNameInput');
+  var msg = input.value.trim();
+  var name = nameInput.value.trim() || 'Anonymous';
+  if (!msg) return;
+  myChatName = name;
+  try { localStorage.setItem('chatName', name); } catch(e) {}
+  input.value = '';
+
+  var now = new Date();
+  var tempMsg = { text: msg, sender: name, time: now.toISOString(), ts: now.getTime() };
+  var pkey = 'p_' + msg + '_' + name;
+  var div = makeDiv(tempMsg, true, '_pending_');
   var container = document.getElementById('chatMessages');
-  var empty = document.getElementById('chatEmpty');
-  var myName = document.getElementById('chatNameInput').value.trim() || myChatName;
-
-  // Build set of current firebase keys
-  var fbKeys = {};
-  msgs.forEach(function(m) { fbKeys[m._key] = true; });
-
-  // Remove rendered messages that were deleted from firebase
-  Object.keys(renderedKeys).forEach(function(key) {
-    if (!fbKeys[key]) {
-      var el = container.querySelector('[data-key="'+key+'"]');
-      if (el) el.remove();
-      delete renderedKeys[key];
-    }
-  });
-
-  // Add new firebase messages not yet in DOM
-  msgs.forEach(function(m) {
-    if (renderedKeys[m._key]) return; // already shown
-
-    // If there's a matching pending div, "upgrade" it to real key instead of duplicating
-    var mine = m.sender === myName;
-    if (mine && pendingDivs[m.text]) {
-      var pdiv = pendingDivs[m.text];
-      pdiv.dataset.key = m._key;
-      var delBtn = pdiv.querySelector('.chat-del-btn');
-      if (delBtn) delBtn.dataset.key = m._key;
-      renderedKeys[m._key] = true;
-      delete pendingDivs[m.text];
-      return;
-    }
-
-    var div = buildChatDiv(m, mine, m._key);
-    container.appendChild(div);
-    renderedKeys[m._key] = true;
-  });
-
-  if (msgs.length || Object.keys(pendingDivs).length) {
-    empty.style.display = 'none';
-  } else {
-    empty.style.display = 'flex';
-  }
-
+  document.getElementById('chatEmpty').style.display = 'none';
+  container.appendChild(div);
   container.scrollTop = container.scrollHeight;
+  pendingDivs[pkey] = div;
+
+  fetch(DB + '.json', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ text: msg, sender: name, time: now.toISOString(), ts: now.getTime() })
+  }).then(function() { setTimeout(loadChat, 600); })
+    .catch(function() { setTimeout(loadChat, 600); });
 }
 
-function buildChatDiv(msg, mine, key) {
+function makeDiv(msg, mine, fbkey) {
   var time = msg.time ? new Date(msg.time).toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'}) : '';
   var div = document.createElement('div');
   div.className = 'chat-msg ' + (mine ? 'mine' : 'theirs');
-  div.dataset.key = key || '';
+  div.dataset.fbkey = fbkey || '';
   div.innerHTML = '<div class="chat-bubble-wrap">' +
     '<div class="chat-bubble">' + esc(msg.text) + '</div>' +
-    (mine ? '<button class="chat-del-btn" data-key="' + (key||'') + '">🗑</button>' : '') +
-    '</div>' +
-    '<div class="chat-meta">' + (mine ? '' : esc(msg.sender) + ' · ') + time + '</div>';
+    (mine ? '<button class="chat-del-btn" data-key="'+(fbkey||'')+'">🗑</button>' : '') +
+    '</div><div class="chat-meta">' + (mine ? '' : esc(msg.sender) + ' · ') + time + '</div>';
 
   if (mine) {
     var delBtn = div.querySelector('.chat-del-btn');
@@ -1283,7 +1324,7 @@ function buildChatDiv(msg, mine, key) {
     }, {passive:true});
     delBtn.addEventListener('click', function() {
       var k = this.dataset.key;
-      div.style.opacity = '0.4';
+      div.style.opacity = '0.3';
       setTimeout(function(){ div.remove(); }, 200);
       if (k && k.indexOf('_pending_') !== 0) {
         delete renderedKeys[k];
@@ -1294,39 +1335,8 @@ function buildChatDiv(msg, mine, key) {
   return div;
 }
 
-function sendChat() {
-  var input = document.getElementById('chatInput');
-  var nameInput = document.getElementById('chatNameInput');
-  var msg = input.value.trim();
-  var name = nameInput.value.trim() || 'Anonymous';
-  if (!msg) return;
-  myChatName = name;
-  try { localStorage.setItem('chatName', name); } catch(e) {}
-  input.value = '';
-
-  var now = new Date();
-  var pendKey = '_pending_' + now.getTime();
-  var pendingMsg = { text: msg, sender: name, time: now.toISOString(), ts: now.getTime() };
-
-  // Show instantly
-  var div = buildChatDiv(pendingMsg, true, pendKey);
-  document.getElementById('chatEmpty').style.display = 'none';
-  var container = document.getElementById('chatMessages');
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
-  pendingDivs[msg] = div;  // track by text so we can upgrade later
-
-  // Send to firebase
-  fetch(DB + '.json', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ text: msg, sender: name, time: now.toISOString(), ts: now.getTime() })
-  }).then(function() {
-    setTimeout(loadChat, 500);
-  }).catch(function() {
-    setTimeout(loadChat, 500);
-  });
-}
+// Poll every 4 seconds
+setInterval(loadChat, 4000);
 
 // Wire up buttons
 document.getElementById('chatFab').addEventListener('click', openChat);
