@@ -417,6 +417,15 @@ header{
 .chat-msg.mine { align-self: flex-end; align-items: flex-end; }
 .chat-msg.theirs { align-self: flex-start; align-items: flex-start; }
 
+.chat-bubble-wrap {
+  display: flex; align-items: center; gap: 6px;
+}
+.chat-del-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 14px; opacity: 0.4; padding: 4px;
+  transition: opacity 0.2s; flex-shrink: 0;
+}
+.chat-del-btn:hover, .chat-del-btn:active { opacity: 1; }
 .chat-bubble {
   padding: 9px 13px;
   border-radius: 16px;
@@ -1148,13 +1157,26 @@ function closeChat() {
   document.getElementById('chatOverlay').classList.remove('open');
 }
 
+// loadChat moved above
+
+// Store message keys for deletion
+var chatMsgKeys = {};
+
 function loadChat() {
   fetch(DB + '.json')
     .then(function(r) { return r.json(); })
     .then(function(data) {
+      chatMsgKeys = {};
       var msgs = [];
       if (data) {
-        Object.values(data).forEach(function(m) { if(m && m.text) msgs.push(m); });
+        Object.entries(data).forEach(function(entry) {
+          var key = entry[0]; var m = entry[1];
+          if (m && m.text) {
+            m._key = key;
+            chatMsgKeys[key] = m;
+            msgs.push(m);
+          }
+        });
         msgs.sort(function(a,b) { return (a.ts||0)-(b.ts||0); });
       }
       renderChat(msgs);
@@ -1165,6 +1187,17 @@ function loadChat() {
       }
       if (!chatOpen) lastCount = msgs.length;
     })
+    .catch(function() {});
+}
+
+function deleteMsg(key, sender) {
+  var myName = document.getElementById('chatNameInput').value.trim() || myChatName;
+  if (sender !== myName) {
+    // Show confirm for deleting others' messages (admin only)
+    if (!confirm('Delete this message?')) return;
+  }
+  fetch(DB + '/' + key + '.json', { method: 'DELETE' })
+    .then(function() { loadChat(); })
     .catch(function() {});
 }
 
@@ -1181,10 +1214,21 @@ function renderChat(msgs) {
     var time = msg.time ? new Date(msg.time).toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'}) : '';
     var div = document.createElement('div');
     div.className = 'chat-msg ' + (mine ? 'mine' : 'theirs');
-    div.innerHTML = '<div class="chat-bubble">' + esc(msg.text) + '</div>' +
+    div.innerHTML = '<div class="chat-bubble-wrap">' +
+      '<div class="chat-bubble">' + esc(msg.text) + '</div>' +
+      (mine ? '<button class="chat-del-btn" data-key="' + msg._key + '" data-sender="' + esc(msg.sender) + '" title="Delete">🗑</button>' : '') +
+      '</div>' +
       '<div class="chat-meta">' + (mine ? '' : esc(msg.sender) + ' · ') + time + '</div>';
     container.appendChild(div);
   });
+
+  // Wire up delete buttons
+  container.querySelectorAll('.chat-del-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      deleteMsg(this.dataset.key, this.dataset.sender);
+    });
+  });
+
   if (near || chatOpen) container.scrollTop = container.scrollHeight;
 }
 
