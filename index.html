@@ -1330,15 +1330,16 @@ function makeMsgDiv(msg, mine, fbkey) {
 
 function escChat(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-document.getElementById('chatFab').addEventListener('click', openChat);
-document.getElementById('chatCloseBtn').addEventListener('click', closeChat);
-document.getElementById('chatOverlay').addEventListener('click', function(e){ if(e.target===this) closeChat(); });
-document.getElementById('chatSendBtn').addEventListener('click', sendChat);
-document.getElementById('chatInput').addEventListener('keydown', function(e){
-  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('chatFab').addEventListener('click', openChat);
+  document.getElementById('chatCloseBtn').addEventListener('click', closeChat);
+  document.getElementById('chatOverlay').addEventListener('click', function(e){ if(e.target===this) closeChat(); });
+  document.getElementById('chatSendBtn').addEventListener('click', sendChat);
+  document.getElementById('chatInput').addEventListener('keydown', function(e){
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}
+  });
+  setInterval(loadChat, 4000);
 });
-
-setInterval(loadChat, 4000);
 </script>
 </body>
 </html>
