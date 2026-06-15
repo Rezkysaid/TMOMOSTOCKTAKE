@@ -1141,19 +1141,28 @@ window.sendSummaryToChat = function() {
 
 // Forward button - event delegation on itemsList
 document.getElementById('itemsList').addEventListener('click', e => {
-  const btn = e.target.closest('[data-fwd]');
-  if (!btn) return;
-  const itemId = btn.dataset.fwd;
+  // Walk up DOM tree to find button with data-fwd
+  let el = e.target;
+  let fwdBtn = null;
+  for (let i = 0; i < 4; i++) {
+    if (!el) break;
+    if (el.dataset && el.dataset.fwd) { fwdBtn = el; break; }
+    el = el.parentElement;
+  }
+  if (!fwdBtn) return;
+  
+  const itemId = fwdBtn.dataset.fwd;
   const items = window._stateItems || [];
   const snap = items.find(i => i.id === itemId);
-  if (!snap) return;
+  if (!snap) { showToast('Item not found!', 'error'); return; }
+  
   const physical = snap.physical || 0;
   const system = snap.system || 0;
   const diff = physical - system;
-  const diffStr = diff > 0 ? '+'+diff : String(diff);
+  const diffStr = diff > 0 ? '+'+diff : ''+diff;
   const status = diff === 0 ? '✅ Matched' : (physical === 0 ? '🔴 Uncounted' : '⚠️ Mismatch');
   const msg = '📦 ' + (snap.category||'No Category') + '\n' +
-    snap.name + '\n' + '🔢 ' + (snap.barcode||'-') + '\n' +
+    snap.name + '\n🔢 ' + (snap.barcode||'-') + '\n' +
     'Physical: ' + physical + ' | System: ' + system + ' | Diff: ' + diffStr + '\n' + status;
   document.getElementById('chatInput').value = msg;
   document.getElementById('chatOverlay').classList.add('open');
