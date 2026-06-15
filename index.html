@@ -1099,29 +1099,27 @@ window.showToast = function(msg,type) {
 
 // Forward item to chat
 window.forwardToChat = function(itemId) {
-  const snap = allItems[itemId];
-  if (!snap) return;
+  const items = window._stateItems || [];
+  const snap = items.find(i => i.id === itemId);
+  if (!snap) { showToast('Item not found!','error'); return; }
   const physical = snap.physical || 0;
   const system = snap.system || 0;
   const diff = physical - system;
   const diffStr = diff > 0 ? '+'+diff : String(diff);
   const status = diff === 0 ? '✅ Matched' : (physical === 0 ? '🔴 Uncounted' : '⚠️ Mismatch');
-  const msg = '📦 ' + (snap.category||'') + '\n' +
+  const msg = '📦 ' + (snap.category||'No Category') + '\n' +
     snap.name + '\n' +
     '🔢 ' + (snap.barcode||'-') + '\n' +
     'Physical: ' + physical + ' | System: ' + system + ' | Diff: ' + diffStr + '\n' +
     status;
-  
-  // Put message in chat input and open chat
   document.getElementById('chatInput').value = msg;
   document.getElementById('chatOverlay').classList.add('open');
-  document.getElementById('chatMessages').scrollTop = 999999;
-  showToast('Item forwarded to chat! Tap send to share.', 'success');
+  setTimeout(function(){ document.getElementById('chatMessages').scrollTop = 999999; }, 100);
+  showToast('Item forwarded! Tap ➤ to send.', 'success');
 };
 
-// Send stock summary to chat
 window.sendSummaryToChat = function() {
-  const items = Object.values(allItems);
+  const items = window._stateItems || [];
   const total = items.length;
   const counted = items.filter(i => (i.physical||0) > 0).length;
   const matched = items.filter(i => (i.physical||0) > 0 && (i.physical||0) === (i.system||0)).length;
@@ -1130,7 +1128,7 @@ window.sendSummaryToChat = function() {
   const pct = total ? Math.round(counted/total*100) : 0;
   const msg = '📊 STOCK TAKE SUMMARY\n' +
     '━━━━━━━━━━━━━━\n' +
-    '📦 Total Items: ' + total + '\n' +
+    '📦 Total: ' + total + ' items\n' +
     '✅ Matched: ' + matched + '\n' +
     '⚠️ Mismatch: ' + mismatch + '\n' +
     '🔴 Uncounted: ' + uncounted + '\n' +
@@ -1138,7 +1136,7 @@ window.sendSummaryToChat = function() {
     '⏰ ' + new Date().toLocaleString('en-MY');
   document.getElementById('chatInput').value = msg;
   document.getElementById('chatOverlay').classList.add('open');
-  showToast('Summary ready! Tap send to share.', 'success');
+  showToast('Summary ready! Tap ➤ to send.', 'success');
 };
 
 </script>
