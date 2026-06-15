@@ -281,6 +281,7 @@ header{
   font-size:13px;color:var(--muted);font-weight:700;
 }
 .ibtn-del{color:var(--red);border-color:rgba(239,68,68,0.2);background:rgba(239,68,68,0.05);}
+.ibtn-fwd{color:var(--accent);border-color:rgba(59,91,252,0.2);background:rgba(59,91,252,0.05);}
 .ibtn:active{background:var(--border);}
 
 .panel-bottom{
@@ -814,6 +815,7 @@ function itemCardHTML(item) {
         ${(item.updatedAt||item.addedAt)?`<div class="item-timestamp">🕐 ${formatDate(item.updatedAt||item.addedAt)}</div>`:''}
       </div>
       <div class="panel-actions">
+        <button class="ibtn ibtn-fwd" onclick="window.forwardToChat('${item.id}')" title="Share to chat">📤</button>
         <button class="ibtn" onclick="editItem('${item.id}')">✎</button>
         <button class="ibtn ibtn-del" onclick="deleteItem('${item.id}')">✕</button>
       </div>
@@ -1095,6 +1097,50 @@ window.showToast = function(msg,type) {
   });
 });
 
+// Forward item to chat
+window.forwardToChat = function(itemId) {
+  const snap = allItems[itemId];
+  if (!snap) return;
+  const physical = snap.physical || 0;
+  const system = snap.system || 0;
+  const diff = physical - system;
+  const diffStr = diff > 0 ? '+'+diff : String(diff);
+  const status = diff === 0 ? '✅ Matched' : (physical === 0 ? '🔴 Uncounted' : '⚠️ Mismatch');
+  const msg = '📦 ' + (snap.category||'') + '\n' +
+    snap.name + '\n' +
+    '🔢 ' + (snap.barcode||'-') + '\n' +
+    'Physical: ' + physical + ' | System: ' + system + ' | Diff: ' + diffStr + '\n' +
+    status;
+  
+  // Put message in chat input and open chat
+  document.getElementById('chatInput').value = msg;
+  document.getElementById('chatOverlay').classList.add('open');
+  document.getElementById('chatMessages').scrollTop = 999999;
+  showToast('Item forwarded to chat! Tap send to share.', 'success');
+};
+
+// Send stock summary to chat
+window.sendSummaryToChat = function() {
+  const items = Object.values(allItems);
+  const total = items.length;
+  const counted = items.filter(i => (i.physical||0) > 0).length;
+  const matched = items.filter(i => (i.physical||0) > 0 && (i.physical||0) === (i.system||0)).length;
+  const mismatch = items.filter(i => (i.physical||0) > 0 && (i.physical||0) !== (i.system||0)).length;
+  const uncounted = items.filter(i => !(i.physical||0)).length;
+  const pct = total ? Math.round(counted/total*100) : 0;
+  const msg = '📊 STOCK TAKE SUMMARY\n' +
+    '━━━━━━━━━━━━━━\n' +
+    '📦 Total Items: ' + total + '\n' +
+    '✅ Matched: ' + matched + '\n' +
+    '⚠️ Mismatch: ' + mismatch + '\n' +
+    '🔴 Uncounted: ' + uncounted + '\n' +
+    '📈 Progress: ' + pct + '%\n' +
+    '⏰ ' + new Date().toLocaleString('en-MY');
+  document.getElementById('chatInput').value = msg;
+  document.getElementById('chatOverlay').classList.add('open');
+  showToast('Summary ready! Tap send to share.', 'success');
+};
+
 </script>
 
 </body>
@@ -1141,6 +1187,7 @@ body.dark .chat-input-row{background:#111827;border-color:#1e2d52;}
 body.dark .chat-text-input{background:#0d1228;border-color:#1e2d52;color:#e8eeff;}
 .chat-text-input:focus{border-color:#3b5bfc;}
 .chat-send-btn{width:40px;height:40px;background:#3b5bfc;border:none;border-radius:50%;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;box-shadow:0 2px 10px rgba(59,91,252,0.35);}
+.chat-text-input{white-space:pre-wrap;}
 </style>
 
 <button class="chat-fab" id="chatFab">💬<span class="chat-badge" id="chatBadge"></span></button>
@@ -1182,6 +1229,15 @@ body.dark .chat-text-input{background:#0d1228;border-color:#1e2d52;color:#e8eeff
 
   function esc(s) {
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function escWithMention(s) {
+    var escaped = esc(s);
+    // Highlight @mentions in blue bold
+    escaped = escaped.replace(/@(\w+)/g, '<strong style="color:#3b5bfc">@$1</strong>');
+    // Preserve newlines
+    escaped = escaped.replace(/\n/g, '<br>');
+    return escaped;
   }
 
   function open() {
@@ -1297,7 +1353,7 @@ body.dark .chat-text-input{background:#0d1228;border-color:#1e2d52;color:#e8eeff
     var d = document.createElement('div');
     d.className = 'chat-msg ' + (mine ? 'mine' : 'theirs');
     d.dataset.k = k;
-    d.innerHTML = '<div class="chat-bubble-wrap"><div class="chat-bubble">' + esc(msg.text) + '</div>' +
+    d.innerHTML = '<div class="chat-bubble-wrap"><div class="chat-bubble">' + escWithMention(msg.text) + '</div>' +
       (mine ? '<button class="chat-del-btn" data-k="'+k+'">🗑</button>' : '') +
       '</div><div class="chat-meta">' + (mine ? '' : esc(msg.sender) + ' · ') + time + '</div>';
     if (mine) {
