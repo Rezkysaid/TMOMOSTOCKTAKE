@@ -262,6 +262,17 @@ header{
   font-size:9px;font-weight:700;padding:2px 8px;border-radius:6px;
   margin-top:5px;text-transform:uppercase;letter-spacing:0.8px;border:1px solid var(--border);
 }
+.item-timestamp{
+  font-size:12px;
+  font-weight:700;
+  color:var(--accent);
+  margin-top:6px;
+  font-family:'Space Mono',monospace;
+  letter-spacing:0.2px;
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
 .panel-actions{display:flex;gap:6px;flex-shrink:0;}
 .ibtn{
   width:30px;height:30px;background:var(--surface);
@@ -754,8 +765,6 @@ onValue(ref(db,'stocktaking'), snap => {
       const tsEl = card.querySelector('.item-timestamp');
       if (tsEl && (item.updatedAt||item.addedAt)) {
         tsEl.textContent = '🕐 ' + formatDate(item.updatedAt||item.addedAt);
-        tsEl.style.color = 'var(--accent)';
-        tsEl.style.fontSize = '11px';
       }
     } else {
       // Card not found in DOM (might be lazy-loaded away) - just update state, no duplicate
@@ -802,7 +811,7 @@ function itemCardHTML(item) {
         <div class="panel-barcode">${item.barcode||'No barcode'}</div>
         <div class="panel-cat-badge">${item.category}</div>
         ${item.note?`<div style="font-size:10px;color:rgba(255,255,255,0.6);margin-top:4px;font-style:italic">✎ ${item.note}</div>`:''}
-        ${(item.updatedAt||item.addedAt)?`<div class="item-timestamp" style="font-size:11px;color:var(--accent);margin-top:6px;font-family:'Space Mono',monospace;font-weight:700;letter-spacing:0.2px">🕐 ${formatDate(item.updatedAt||item.addedAt)}</div>`:''}
+        ${(item.updatedAt||item.addedAt)?`<div class="item-timestamp">🕐 ${formatDate(item.updatedAt||item.addedAt)}</div>`:''}
       </div>
       <div class="panel-actions">
         <button class="ibtn" onclick="editItem('${item.id}')">✎</button>
@@ -1171,7 +1180,6 @@ function closeChat() {
 
 // loadChat moved above
 
-// Store message keys for deletion
 var chatMsgKeys = {};
 
 function loadChat() {
@@ -1223,34 +1231,35 @@ function renderChat(msgs) {
       '</div>' +
       '<div class="chat-meta">' + (mine ? '' : esc(msg.sender) + ' · ') + time + '</div>';
 
-    // Long press to show delete button (mine only)
+    // Double tap to show delete button (mine only)
     if (mine) {
-      var pressTimer;
-      var bubble = div.querySelector('.chat-bubble');
       var delBtn = div.querySelector('.chat-del-btn');
+      var lastTap = 0;
 
-      // Long press - show delete
-      bubble.addEventListener('touchstart', function(e) {
-        pressTimer = setTimeout(function() {
-          delBtn.classList.add('visible');
-        }, 500);
+      div.addEventListener('touchend', function(e) {
+        var now = Date.now();
+        if (now - lastTap < 300) {
+          // Double tap - toggle delete button
+          e.preventDefault();
+          document.querySelectorAll('.chat-del-btn.visible').forEach(function(b) {
+            b.classList.remove('visible');
+          });
+          delBtn.classList.toggle('visible');
+        }
+        lastTap = now;
       });
-      bubble.addEventListener('touchend', function() { clearTimeout(pressTimer); });
-      bubble.addEventListener('touchmove', function() { clearTimeout(pressTimer); });
 
       // Hide delete when tapping elsewhere
       document.addEventListener('touchstart', function(e) {
         if (!div.contains(e.target)) delBtn.classList.remove('visible');
-      });
+      }, {passive: true});
 
       // Delete on click
       delBtn.addEventListener('click', function() {
         var key = this.dataset.key;
-        // Remove from DOM instantly
         div.style.opacity = '0.4';
         div.style.transition = 'opacity 0.2s';
         setTimeout(function() { div.remove(); }, 200);
-        // Delete from Firebase
         fetch(DB + '/' + key + '.json', { method: 'DELETE' }).catch(function() {});
       });
     }
@@ -1270,11 +1279,65 @@ function sendChat() {
   myChatName = name;
   try { localStorage.setItem('chatName', name); } catch(e) {}
   input.value = '';
+
+  // Instantly show message in UI
+  var now = new Date();
+  var time = now.toLocaleTimeString('en-MY', {hour:'2-digit', minute:'2-digit'});
+  var tempMsg = { text: msg, sender: name, time: now.toISOString(), ts: now.getTime(), _key: '_temp_' + now.getTime() };
+  appendChatMsg(tempMsg, true);
+
+  // Send to Firebase
   fetch(DB + '.json', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ text: msg, sender: name, time: new Date().toISOString(), ts: Date.now() })
-  }).then(function() { loadChat(); }).catch(function() {});
+    body: JSON.stringify({ text: msg, sender: name, time: now.toISOString(), ts: now.getTime() })
+  }).then(function() {
+    loadChat(); // refresh to get real key
+  }).catch(function() {});
+}
+
+function appendChatMsg(msg, mine) {
+  var container = document.getElementById('chatMessages');
+  var empty = document.getElementById('chatEmpty');
+  empty.style.display = 'none';
+
+  var time = msg.time ? new Date(msg.time).toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'}) : '';
+  var div = document.createElement('div');
+  div.className = 'chat-msg ' + (mine ? 'mine' : 'theirs');
+  div.dataset.tempKey = msg._key || '';
+  div.innerHTML = '<div class="chat-bubble-wrap">' +
+    '<div class="chat-bubble">' + esc(msg.text) + '</div>' +
+    (mine ? '<button class="chat-del-btn" data-key="' + (msg._key||'') + '" data-sender="' + esc(msg.sender) + '">🗑</button>' : '') +
+    '</div>' +
+    '<div class="chat-meta">' + (mine ? '' : esc(msg.sender) + ' · ') + time + '</div>';
+
+  if (mine) {
+    var delBtn = div.querySelector('.chat-del-btn');
+    var lastTap = 0;
+    div.addEventListener('touchend', function(e) {
+      var now = Date.now();
+      if (now - lastTap < 300) {
+        e.preventDefault();
+        document.querySelectorAll('.chat-del-btn.visible').forEach(function(b) { b.classList.remove('visible'); });
+        delBtn.classList.toggle('visible');
+      }
+      lastTap = now;
+    });
+    document.addEventListener('touchstart', function(e) {
+      if (!div.contains(e.target)) delBtn.classList.remove('visible');
+    }, {passive: true});
+    delBtn.addEventListener('click', function() {
+      var key = this.dataset.key;
+      div.style.opacity = '0.4';
+      setTimeout(function() { div.remove(); }, 200);
+      if (key && !key.startsWith('_temp_')) {
+        fetch(DB + '/' + key + '.json', { method: 'DELETE' }).catch(function() {});
+      }
+    });
+  }
+
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
 }
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
