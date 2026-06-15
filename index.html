@@ -1152,35 +1152,43 @@ function toggleTheme() {
   try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch(e) {}
 }
 </script>
+<!-- CHAT FAB -->
+<button class="chat-fab" id="chatFab">💬
+  <span class="chat-badge" id="chatBadge"></span>
+</button>
+
+<!-- CHAT OVERLAY -->
+<div class="chat-overlay" id="chatOverlay">
+  <div class="chat-panel">
+    <div class="chat-header">
+      <div class="chat-header-info">
+        <div class="chat-header-avatar">👥</div>
+        <div>
+          <div class="chat-header-title">Team Chat</div>
+          <div class="chat-header-sub">TMOMO Stock Taking</div>
+        </div>
+      </div>
+      <button class="chat-close" id="chatCloseBtn">✕</button>
+    </div>
+    <div class="chat-name-row">
+      <input class="chat-name-input" id="chatNameInput" placeholder="Your name (e.g. Ali, Ahmad...)" maxlength="20">
+    </div>
+    <div class="chat-empty" id="chatEmpty">
+      <div class="icon">💬</div>
+      <p>No messages yet. Start the conversation!</p>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-row">
+      <textarea class="chat-text-input" id="chatInput" placeholder="Type a message..." rows="1"></textarea>
+      <button class="chat-send-btn" id="chatSendBtn">➤</button>
+    </div>
+  </div>
+</div>
+
 <script>
-// TEAM CHAT - Pure REST API, no module dependency
-var DB = 'https://stock-tacking-default-rtdb.asia-southeast1.firebasedatabase.app/stocktaking/chat';
+var DB_CHAT = 'https://stock-tacking-default-rtdb.asia-southeast1.firebasedatabase.app/stocktaking/chat';
 var chatOpen = false;
-var lastCount = 0;
-var myChatName = '';
-var chatPollInterval = null;
-
-try { myChatName = localStorage.getItem('chatName') || ''; } catch(e) {}
-
-function openChat() {
-  chatOpen = true;
-  document.getElementById('chatOverlay').classList.add('open');
-  document.getElementById('chatBadge').classList.remove('show');
-  document.getElementById('chatBadge').textContent = '';
-  if (myChatName) document.getElementById('chatNameInput').value = myChatName;
-  loadChat();
-  if (!chatPollInterval) chatPollInterval = setInterval(loadChat, 3000);
-}
-
-function closeChat() {
-  chatOpen = false;
-  document.getElementById('chatOverlay').classList.remove('open');
-}
-
-// ===== TEAM CHAT =====
-var DB = 'https://stock-tacking-default-rtdb.asia-southeast1.firebasedatabase.app/stocktaking/chat';
-var chatOpen = false;
-var lastCount = 0;
+var lastChatCount = 0;
 var myChatName = '';
 var renderedKeys = {};
 var pendingDivs = {};
@@ -1202,7 +1210,7 @@ function closeChat() {
 }
 
 function loadChat() {
-  fetch(DB + '.json')
+  fetch(DB_CHAT + '.json')
     .then(function(r) { return r.json(); })
     .then(function(data) {
       var msgs = [];
@@ -1213,16 +1221,12 @@ function loadChat() {
         });
         msgs.sort(function(a,b) { return (a.ts||0)-(b.ts||0); });
       }
-
       var container = document.getElementById('chatMessages');
       var empty = document.getElementById('chatEmpty');
       var myName = document.getElementById('chatNameInput').value.trim() || myChatName;
 
-      // Build set of firebase keys
       var fbKeySet = {};
       msgs.forEach(function(m) { fbKeySet[m._key] = true; });
-
-      // Remove deleted messages from DOM
       Object.keys(renderedKeys).forEach(function(k) {
         if (!fbKeySet[k]) {
           var el = container.querySelector('[data-fbkey="'+k+'"]');
@@ -1231,40 +1235,32 @@ function loadChat() {
         }
       });
 
-      // Add new messages
       msgs.forEach(function(m) {
         if (renderedKeys[m._key]) return;
         var mine = m.sender === myName;
-
-        // Upgrade pending div if exists
-        if (mine) {
-          var pkey = 'p_' + m.text + '_' + m.sender;
-          if (pendingDivs[pkey]) {
-            pendingDivs[pkey].dataset.fbkey = m._key;
-            var db = pendingDivs[pkey].querySelector('.chat-del-btn');
-            if (db) db.dataset.key = m._key;
-            renderedKeys[m._key] = true;
-            delete pendingDivs[pkey];
-            return;
-          }
+        var pkey = 'p_'+m.text+'_'+m.sender;
+        if (mine && pendingDivs[pkey]) {
+          pendingDivs[pkey].dataset.fbkey = m._key;
+          var db = pendingDivs[pkey].querySelector('.chat-del-btn');
+          if (db) db.dataset.key = m._key;
+          renderedKeys[m._key] = true;
+          delete pendingDivs[pkey];
+          return;
         }
-
-        var div = makeDiv(m, mine, m._key);
+        var div = makeMsgDiv(m, mine, m._key);
         container.appendChild(div);
         renderedKeys[m._key] = true;
       });
 
-      var hasContent = container.children.length > 0;
-      empty.style.display = hasContent ? 'none' : 'flex';
-      if (hasContent) container.scrollTop = container.scrollHeight;
+      empty.style.display = container.children.length ? 'none' : 'flex';
+      if (container.children.length) container.scrollTop = container.scrollHeight;
 
-      // Badge logic
-      if (!chatOpen && msgs.length > lastCount && lastCount > 0) {
+      if (!chatOpen && msgs.length > lastChatCount && lastChatCount > 0) {
         var badge = document.getElementById('chatBadge');
-        badge.textContent = msgs.length - lastCount;
+        badge.textContent = msgs.length - lastChatCount;
         badge.classList.add('show');
       }
-      if (!chatOpen) lastCount = msgs.length;
+      if (!chatOpen) lastChatCount = msgs.length;
     })
     .catch(function() {});
 }
@@ -1278,41 +1274,38 @@ function sendChat() {
   myChatName = name;
   try { localStorage.setItem('chatName', name); } catch(e) {}
   input.value = '';
-
   var now = new Date();
   var tempMsg = { text: msg, sender: name, time: now.toISOString(), ts: now.getTime() };
-  var pkey = 'p_' + msg + '_' + name;
-  var div = makeDiv(tempMsg, true, '_pending_');
+  var pkey = 'p_'+msg+'_'+name;
+  var div = makeMsgDiv(tempMsg, true, '_pending_');
   var container = document.getElementById('chatMessages');
   document.getElementById('chatEmpty').style.display = 'none';
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
   pendingDivs[pkey] = div;
-
-  fetch(DB + '.json', {
+  fetch(DB_CHAT + '.json', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ text: msg, sender: name, time: now.toISOString(), ts: now.getTime() })
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ text:msg, sender:name, time:now.toISOString(), ts:now.getTime() })
   }).then(function() { setTimeout(loadChat, 600); })
     .catch(function() { setTimeout(loadChat, 600); });
 }
 
-function makeDiv(msg, mine, fbkey) {
+function makeMsgDiv(msg, mine, fbkey) {
   var time = msg.time ? new Date(msg.time).toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit'}) : '';
   var div = document.createElement('div');
-  div.className = 'chat-msg ' + (mine ? 'mine' : 'theirs');
-  div.dataset.fbkey = fbkey || '';
-  div.innerHTML = '<div class="chat-bubble-wrap">' +
-    '<div class="chat-bubble">' + esc(msg.text) + '</div>' +
-    (mine ? '<button class="chat-del-btn" data-key="'+(fbkey||'')+'">🗑</button>' : '') +
-    '</div><div class="chat-meta">' + (mine ? '' : esc(msg.sender) + ' · ') + time + '</div>';
-
+  div.className = 'chat-msg '+(mine?'mine':'theirs');
+  div.dataset.fbkey = fbkey||'';
+  div.innerHTML = '<div class="chat-bubble-wrap">'+
+    '<div class="chat-bubble">'+escChat(msg.text)+'</div>'+
+    (mine?'<button class="chat-del-btn" data-key="'+(fbkey||'')+'">🗑</button>':'')+
+    '</div><div class="chat-meta">'+(mine?'':escChat(msg.sender)+' · ')+time+'</div>';
   if (mine) {
     var delBtn = div.querySelector('.chat-del-btn');
     var lastTap = 0;
     div.addEventListener('touchend', function(e) {
       var n = Date.now();
-      if (n - lastTap < 300) {
+      if (n-lastTap < 300) {
         e.preventDefault();
         document.querySelectorAll('.chat-del-btn.visible').forEach(function(b){ b.classList.remove('visible'); });
         delBtn.classList.toggle('visible');
@@ -1321,34 +1314,31 @@ function makeDiv(msg, mine, fbkey) {
     });
     document.addEventListener('touchstart', function(e) {
       if (!div.contains(e.target)) delBtn.classList.remove('visible');
-    }, {passive:true});
+    },{passive:true});
     delBtn.addEventListener('click', function() {
       var k = this.dataset.key;
-      div.style.opacity = '0.3';
-      setTimeout(function(){ div.remove(); }, 200);
-      if (k && k.indexOf('_pending_') !== 0) {
+      div.style.opacity='0.3';
+      setTimeout(function(){ div.remove(); },200);
+      if (k && k.indexOf('_pending_')!==0) {
         delete renderedKeys[k];
-        fetch(DB + '/' + k + '.json', { method:'DELETE' }).catch(function(){});
+        fetch(DB_CHAT+'/'+k+'.json',{method:'DELETE'}).catch(function(){});
       }
     });
   }
   return div;
 }
 
-// Poll every 4 seconds
-setInterval(loadChat, 4000);
+function escChat(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// Wire up buttons
 document.getElementById('chatFab').addEventListener('click', openChat);
 document.getElementById('chatCloseBtn').addEventListener('click', closeChat);
-document.getElementById('chatOverlay').addEventListener('click', function(e) { if(e.target===this) closeChat(); });
+document.getElementById('chatOverlay').addEventListener('click', function(e){ if(e.target===this) closeChat(); });
 document.getElementById('chatSendBtn').addEventListener('click', sendChat);
-document.getElementById('chatInput').addEventListener('keydown', function(e) {
-  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+document.getElementById('chatInput').addEventListener('keydown', function(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}
 });
 
-// Poll for new messages in background
-setInterval(loadChat, 5000);
+setInterval(loadChat, 4000);
 </script>
 </body>
 </html>
