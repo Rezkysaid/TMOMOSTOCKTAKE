@@ -816,7 +816,7 @@ function itemCardHTML(item) {
         ${(item.updatedAt||item.addedAt)?`<div class="item-timestamp">🕐 ${formatDate(item.updatedAt||item.addedAt)}</div>`:''}
       </div>
       <div class="panel-actions">
-        <button class="ibtn ibtn-fwd" data-fwd="${item.id}" title="Share to chat">📤</button>
+        <button class="ibtn ibtn-fwd" onclick="forwardItem('${item.id}')" title="Share to chat">📤</button>
         <button class="ibtn" onclick="editItem('${item.id}')">✎</button>
         <button class="ibtn ibtn-del" onclick="deleteItem('${item.id}')">✕</button>
       </div>
@@ -1099,7 +1099,7 @@ window.showToast = function(msg,type) {
 });
 
 // Forward item to chat
-window.forwardToChat = function(itemId) {
+window.forwardItem = function(itemId) {
   const items = window._stateItems || [];
   const snap = items.find(i => i.id === itemId);
   if (!snap) { showToast('Item not found!','error'); return; }
@@ -1140,36 +1140,7 @@ window.sendSummaryToChat = function() {
   showToast('Summary ready! Tap ➤ to send.', 'success');
 };
 
-// Forward button - event delegation on itemsList
-const _itemsList = document.getElementById('itemsList');
-if (_itemsList) _itemsList.addEventListener('click', e => {
-  // Walk up DOM tree to find button with data-fwd
-  let el = e.target;
-  let fwdBtn = null;
-  for (let i = 0; i < 4; i++) {
-    if (!el) break;
-    if (el.dataset && el.dataset.fwd) { fwdBtn = el; break; }
-    el = el.parentElement;
-  }
-  if (!fwdBtn) return;
-  
-  const itemId = fwdBtn.dataset.fwd;
-  const items = window._stateItems || [];
-  const snap = items.find(i => i.id === itemId);
-  if (!snap) { showToast('Item not found!', 'error'); return; }
-  
-  const physical = snap.physical || 0;
-  const system = snap.system || 0;
-  const diff = physical - system;
-  const diffStr = diff > 0 ? '+'+diff : ''+diff;
-  const status = diff === 0 ? '✅ Matched' : (physical === 0 ? '🔴 Uncounted' : '⚠️ Mismatch');
-  const msg = '📦 ' + (snap.category||'No Category') + '\n' +
-    snap.name + '\n🔢 ' + (snap.barcode||'-') + '\n' +
-    'Physical: ' + physical + ' | System: ' + system + ' | Diff: ' + diffStr + '\n' + status;
-  document.getElementById('chatInput').value = msg;
-  document.getElementById('chatOverlay').classList.add('open');
-  showToast('Item forwarded! Tap ➤ to send.', 'success');
-});
+// Forward handled via window.forwardItem onclick
 
 // Summary button
 const _btnSum = document.getElementById('btnSummary');
