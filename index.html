@@ -560,6 +560,8 @@ onValue(ref(db,'stocktaking'), snap => {
       const tsEl = card.querySelector('.item-timestamp');
       if (tsEl && (item.updatedAt||item.addedAt)) {
         tsEl.textContent = '🕐 ' + formatDate(item.updatedAt||item.addedAt);
+        tsEl.style.color = 'var(--accent)';
+        tsEl.style.fontSize = '11px';
       }
     } else {
       // Card not found in DOM (might be lazy-loaded away) - just update state, no duplicate
@@ -606,7 +608,7 @@ function itemCardHTML(item) {
         <div class="panel-barcode">${item.barcode||'No barcode'}</div>
         <div class="panel-cat-badge">${item.category}</div>
         ${item.note?`<div style="font-size:10px;color:rgba(255,255,255,0.6);margin-top:4px;font-style:italic">✎ ${item.note}</div>`:''}
-        ${(item.updatedAt||item.addedAt)?`<div class="item-timestamp" style="font-size:9px;color:rgba(255,255,255,0.45);margin-top:5px;font-family:monospace;letter-spacing:0.3px">🕐 ${formatDate(item.updatedAt||item.addedAt)}</div>`:''}
+        ${(item.updatedAt||item.addedAt)?`<div class="item-timestamp" style="font-size:11px;color:var(--accent);margin-top:6px;font-family:'Space Mono',monospace;font-weight:700;letter-spacing:0.2px">🕐 ${formatDate(item.updatedAt||item.addedAt)}</div>`:''}
       </div>
       <div class="panel-actions">
         <button class="ibtn" onclick="editItem('${item.id}')">✎</button>
