@@ -225,15 +225,7 @@ header{
 .search-wrap{display:flex;gap:8px;margin-bottom:14px;}
 .search-input-wrap{flex:1;position:relative;}
 .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none;}
-.search-wrap input{width:100%;background:var(--card);border:2px solid var(--border2);color:var(--text);padding:12px 44px 12px 36px;border-radius:14px;font-family:var(--sans);font-size:16px;outline:none;transition:border-color 0.2s;box-shadow:inset 0 3px 0 rgba(0,0,0,0.2);font-weight:500;}
-.scan-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--accent);font-size:20px;padding:4px;line-height:1;display:flex;align-items:center;justify-content:center;}
-.scan-btn:active{opacity:0.6;}
-.scanner-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:300;flex-direction:column;align-items:center;justify-content:center;}
-.scanner-overlay.open{display:flex;}
-.scanner-box{width:min(88vw,380px);}
-.scanner-close{position:absolute;top:calc(env(safe-area-inset-top,0px) + 20px);right:20px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:22px;border-radius:50%;width:46px;height:46px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.scanner-label{color:rgba(255,255,255,0.6);font-size:13px;margin-top:16px;text-align:center;font-family:var(--sans);}
-#scannerVideo{width:100%;border-radius:16px;display:block;background:#111;min-height:220px;}
+.search-wrap input{width:100%;background:var(--card);border:2px solid var(--border2);color:var(--text);padding:12px 14px 12px 36px;border-radius:14px;font-family:var(--sans);font-size:16px;outline:none;transition:border-color 0.2s;box-shadow:inset 0 3px 0 rgba(0,0,0,0.2);font-weight:500;}
 .search-wrap input:focus{border-color:var(--gold);box-shadow:inset 0 3px 0 rgba(0,0,0,0.2),0 0 0 3px rgba(255,217,61,0.15);}
 .search-wrap input::placeholder{color:var(--muted);}
 .filter-select{background:var(--card);border:2px solid var(--border2);color:var(--text);padding:12px 10px;border-radius:14px;font-family:var(--sans);font-size:16px;outline:none;-webkit-appearance:none;cursor:pointer;box-shadow:inset 0 3px 0 rgba(0,0,0,0.2);font-weight:600;}
@@ -651,13 +643,6 @@ body.dark .chat-name-input { background: #0d1228; border-color: #1e2d52; color: 
       <span class="search-icon">⌕</span>
       <input type="text" id="searchInput" placeholder="Search barcode or name..." inputmode="numeric" pattern="[0-9]*" oninput="renderItems()">
       <!-- Android/Chrome: button opens live scanner -->
-      <button id="scanBtn" class="scan-btn" onclick="openScanner()" title="Scan barcode">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
-      </button>
-      <!-- iOS: label directly triggers file input — no JS click() needed -->
-      <label id="scanLabel" for="barcodeCaptureInput" class="scan-btn" title="Scan barcode" style="display:none">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
-      </label>
     </div>
     <select class="filter-select" id="filterStatus" onchange="renderItems()">
       <option value="all">All</option>
@@ -1619,101 +1604,6 @@ window.forwardItem = function(itemId) {
   setInterval(pull, 4000);
 })();
 
-// ===== BARCODE SCANNER =====
-(function(){
-  var _stream = null;
-  var _scanLoop = null;
-
-  function onFound(text) {
-    stopStream();
-    document.getElementById('searchInput').value = text.trim();
-    renderItems();
-    closeScanner();
-    showToast('Scanned: ' + text.trim(), 'success');
-  }
-
-  function stopStream() {
-    if (_scanLoop) { cancelAnimationFrame(_scanLoop); _scanLoop = null; }
-    if (_stream) { _stream.getTracks().forEach(function(t){ t.stop(); }); _stream = null; }
-    var v = document.getElementById('scannerVideo');
-    if (v) v.srcObject = null;
-  }
-
-  async function startLiveScan() {
-    var overlay = document.getElementById('scannerOverlay');
-    overlay.classList.add('open');
-    lockBodyScroll();
-    try {
-      _stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      var video = document.getElementById('scannerVideo');
-      video.srcObject = _stream;
-      await video.play();
-      var detector = new BarcodeDetector({ formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code','itf'] });
-      function scan() {
-        if (!_stream) return;
-        detector.detect(video).then(function(codes) {
-          if (codes.length > 0) onFound(codes[0].rawValue);
-          else _scanLoop = requestAnimationFrame(scan);
-        }).catch(function(){ _scanLoop = requestAnimationFrame(scan); });
-      }
-      _scanLoop = requestAnimationFrame(scan);
-    } catch(e) {
-      showToast('Camera permission denied', 'error');
-      closeScanner();
-    }
-  }
-
-  window.openScanner = function() {
-    startLiveScan();
-  };
-
-  window.closeScanner = function() {
-    stopStream();
-    document.getElementById('scannerOverlay').classList.remove('open');
-    unlockBodyScroll();
-  };
-
-  window.handleBarcodeCapture = function(input) {
-    if (!input.files || !input.files[0]) return;
-    var file = input.files[0];
-    input.value = '';
-    showToast('Processing...', 'success');
-
-    if (!window.Quagga) {
-      showToast('Library not loaded — reload page & retry', 'error');
-      return;
-    }
-
-    var url = URL.createObjectURL(file);
-    Quagga.decodeSingle({
-      decoder: { readers: ['ean_reader','ean_8_reader','code_128_reader','code_39_reader','upc_reader','upc_e_reader'] },
-      locate: true,
-      src: url
-    }, function(result) {
-      URL.revokeObjectURL(url);
-      if (result && result.codeResult && result.codeResult.code) {
-        document.getElementById('searchInput').value = result.codeResult.code.trim();
-        renderItems();
-        showToast('Scanned: ' + result.codeResult.code.trim(), 'success');
-      } else {
-        showToast('No barcode detected — try again', 'error');
-      }
-    });
-  };
-
-  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeScanner(); });
-
-  // Switch to label-based trigger for iOS (no BarcodeDetector)
-  // label[for=] is the only 100% reliable way to open file picker on iOS Safari
-  setTimeout(function() {
-    var hasLive = 'BarcodeDetector' in window;
-    document.getElementById('scanBtn').style.display = hasLive ? '' : 'none';
-    document.getElementById('scanLabel').style.display = hasLive ? 'none' : 'flex';
-
-    var cap = document.getElementById('barcodeCaptureInput');
-    if (cap) cap.addEventListener('change', function() { window.handleBarcodeCapture(this); });
-  }, 0);
-})();
 
 // ===== EXTRA ZOOM LOCK =====
 // Backup for double-tap-zoom: some iOS Safari versions still zoom on a fast
@@ -1732,14 +1622,5 @@ window.forwardItem = function(itemId) {
   document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
 })();
 </script>
-<input type="file" id="barcodeCaptureInput" accept="image/*" capture="environment" style="position:fixed;top:-200px;left:-200px;opacity:0;width:1px;height:1px;pointer-events:none;">
-<div class="scanner-overlay" id="scannerOverlay">
-  <button class="scanner-close" onclick="closeScanner()">✕</button>
-  <div class="scanner-box">
-    <video id="scannerVideo" autoplay playsinline muted></video>
-  </div>
-  <div class="scanner-label">Aim camera at barcode</div>
-</div>
-<script src="https://unpkg.com/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
 </body>
 </html>
