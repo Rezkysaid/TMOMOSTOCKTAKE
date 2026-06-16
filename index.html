@@ -1630,25 +1630,21 @@ window.forwardItem = function(itemId) {
       scanner = new Html5Qrcode('scannerContainer');
     }
 
-    Html5Qrcode.getCameras().then(cameras => {
-      if (!cameras || !cameras.length) { showToast('No camera found','error'); closeScanner(); return; }
-      const backCam = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length-1];
-      scanner.start(
-        backCam.id,
-        { fps: 10, qrbox: { width: 240, height: 120 }, aspectRatio: 1.5 },
-        function(decodedText) {
-          const inp = document.getElementById('searchInput');
-          inp.value = decodedText.trim();
-          renderItems();
-          closeScanner();
-          showToast('Scanned: ' + decodedText.trim(), 'success');
-        },
-        function() {}
-      ).then(() => { scannerRunning = true; }).catch(err => {
-        showToast('Camera error','error');
+    scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 240, height: 120 } },
+      function(decodedText) {
+        const inp = document.getElementById('searchInput');
+        inp.value = decodedText.trim();
+        renderItems();
         closeScanner();
-      });
-    }).catch(() => { showToast('Camera permission denied','error'); closeScanner(); });
+        showToast('Scanned: ' + decodedText.trim(), 'success');
+      },
+      function() {}
+    ).then(() => { scannerRunning = true; }).catch(function() {
+      showToast('Camera permission denied','error');
+      closeScanner();
+    });
   };
 
   window.closeScanner = function() {
