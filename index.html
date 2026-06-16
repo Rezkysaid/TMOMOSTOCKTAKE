@@ -1677,22 +1677,37 @@ window.forwardItem = function(itemId) {
     if (!input.files || !input.files[0]) return;
     var file = input.files[0];
     input.value = '';
-    var tmpId = 'qrtmp' + Date.now();
-    var tmpEl = document.createElement('div');
-    tmpEl.id = tmpId;
-    tmpEl.style.cssText = 'display:none;position:absolute;';
-    document.body.appendChild(tmpEl);
-    var s = new Html5Qrcode(tmpId);
-    s.scanFile(file, false).then(function(text) {
-      document.getElementById('searchInput').value = text.trim();
-      renderItems();
-      showToast('Scanned: ' + text.trim(), 'success');
-    }).catch(function() {
-      showToast('No barcode found — try again', 'error');
-    }).finally(function() {
-      try { s.clear(); } catch(e){}
-      tmpEl.remove();
-    });
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function() {
+      URL.revokeObjectURL(url);
+      var MAX = 1920;
+      var w = img.width, h = img.height;
+      if (w > MAX || h > MAX) { var r = Math.min(MAX/w, MAX/h); w = Math.round(w*r); h = Math.round(h*r); }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      if ('BarcodeDetector' in window) {
+        new BarcodeDetector().detect(canvas).then(function(codes) {
+          if (codes.length > 0) { document.getElementById('searchInput').value = codes[0].rawValue.trim(); renderItems(); showToast('Scanned!', 'success'); }
+          else showToast('No barcode found — try again', 'error');
+        });
+      } else if (window.ZXing) {
+        var imageData = canvas.getContext('2d').getImageData(0, 0, w, h);
+        try {
+          var lum = new ZXing.RGBLuminanceSource(imageData.data, w, h);
+          var bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
+          var result = new ZXing.MultiFormatReader().decode(bmp);
+          document.getElementById('searchInput').value = result.getText().trim();
+          renderItems();
+          showToast('Scanned!', 'success');
+        } catch(e) { showToast('No barcode found — try again', 'error'); }
+      } else {
+        showToast('Scanner not ready — try again', 'error');
+      }
+    };
+    img.onerror = function() { URL.revokeObjectURL(url); showToast('Error reading image', 'error'); };
+    img.src = url;
   };
 
   document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeScanner(); });
@@ -1723,6 +1738,6 @@ window.forwardItem = function(itemId) {
   </div>
   <div class="scanner-label">Aim camera at barcode</div>
 </div>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
 </body>
 </html>
