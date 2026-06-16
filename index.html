@@ -1071,14 +1071,29 @@ window._savePhysical = async function(id, physical, cb) {
 window.exportData = function() {
   setSyncStatus('syncing');
   showToast('Fetching latest data...','success');
-  // Force fresh fetch from Firebase using already-available get + ref + db
+
+  let done = false;
+  // Timeout fallback after 4 seconds - use cached state.items if fetch is slow
+  const timeoutId = setTimeout(function() {
+    if (done) return;
+    done = true;
+    doExport(state.items);
+    setSyncStatus('synced');
+    showToast('Using cached data (slow connection)','success');
+  }, 4000);
+
   get(ref(db,'stocktaking/items')).then(function(snap) {
+    if (done) return;
+    done = true;
+    clearTimeout(timeoutId);
     const raw = snap.val() || {};
     const freshItems = Object.entries(raw).map(function(e){ return Object.assign({id:e[0]},e[1]); });
     doExport(freshItems);
     setSyncStatus('synced');
   }).catch(function() {
-    // fallback to state.items
+    if (done) return;
+    done = true;
+    clearTimeout(timeoutId);
     doExport(state.items);
     setSyncStatus('synced');
   });
