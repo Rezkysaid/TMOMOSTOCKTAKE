@@ -1068,44 +1068,18 @@ window._savePhysical = async function(id, physical, cb) {
   } catch(e) { setSyncStatus('error'); showToast('Failed!','error'); }
 }
 
-window.exportData = async function() {
-  showToast('Fetching latest data...', 'success');
-  setSyncStatus('syncing');
-  try {
-    // Fetch fresh data directly from Firebase before export
-    const { get } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
-    const snap = await get(ref(db, 'stocktaking/items'));
-    const freshData = snap.val() || {};
-    const freshItems = Object.entries(freshData).map(([id,v]) => ({id,...v}));
-    
-    const today = new Date().toLocaleDateString('en-MY',{day:'2-digit',month:'2-digit',year:'numeric'});
-    const headers = ['\u5546\u54c1\u540d\u79f0','\u6761\u7801','\u5546\u54c1\u5206\u7c7b','\u5e93\u5b58','Shop physical Stock'];
-    const rows = freshItems.map(item=>[item.name||'',item.barcode||'',item.category||'',item.system||0,item.physical||0]);
-    const csv = '\uFEFF' + [headers,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
-    const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
-    const filename = 'TMOMO_Taman_Connaught_StockTake_'+today.replace(/\//g,'-')+'.csv';
-    setSyncStatus('synced');
-    showToast('Export ready! (' + freshItems.length + ' items)', 'success');
-    const file = new File([blob],filename,{type:'text/csv'});
-    if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
-      navigator.share({files:[file],title:'StockTake Export'}).catch(()=>dlBlob(blob,filename));
-    } else { dlBlob(blob,filename); }
-  } catch(e) {
-    // Fallback to state.items if fetch fails
-    setSyncStatus('synced');
-    const today = new Date().toLocaleDateString('en-MY',{day:'2-digit',month:'2-digit',year:'numeric'});
-    const headers = ['\u5546\u54c1\u540d\u79f0','\u6761\u7801','\u5546\u54c1\u5206\u7c7b','\u5e93\u5b58','Shop physical Stock'];
-    const rows = state.items.map(item=>[item.name||'',item.barcode||'',item.category||'',item.system||0,item.physical||0]);
-    const csv = '\uFEFF' + [headers,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
-    const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
-    const filename = 'TMOMO_Taman_Connaught_StockTake_'+today.replace(/\//g,'-')+'.csv';
-    const file = new File([blob],filename,{type:'text/csv'});
-    if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
-      navigator.share({files:[file],title:'StockTake Export'}).catch(()=>dlBlob(blob,filename));
-    } else { dlBlob(blob,filename); }
-  }
+window.exportData = function() {
+  const today = new Date().toLocaleDateString('en-MY',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const headers = ['\u5546\u54c1\u540d\u79f0','\u6761\u7801','\u5546\u54c1\u5206\u7c7b','\u5e93\u5b58','Shop physical Stock'];
+  const rows = state.items.map(item=>[item.name||'',item.barcode||'',item.category||'',item.system||0,item.physical||0]);
+  const csv = '\uFEFF' + [headers,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const filename = 'TMOMO_Taman_Connaught_StockTake_'+today.replace(/\//g,'-')+'.csv';
+  const file = new File([blob],filename,{type:'text/csv'});
+  if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
+    navigator.share({files:[file],title:'StockTake Export'}).catch(()=>dlBlob(blob,filename));
+  } else { dlBlob(blob,filename); }
 }
-
 function dlBlob(blob,filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
