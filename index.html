@@ -1068,35 +1068,76 @@ window._savePhysical = async function(id, physical, cb) {
   } catch(e) { setSyncStatus('error'); showToast('Failed!','error'); }
 }
 
-window.exportData = function() {
-  // state.items is kept live by the onValue listener above, so it is ALWAYS
-  // the latest data already. We export it SYNCHRONOUSLY here -- no async
-  // Firebase get() -- because iOS Safari only allows navigator.share() while
-  // the tap's "user activation" is still alive. Any await/.then() first kills
-  // that activation, which is what made share throw and leave the header
-  // stuck on "Saving" with no file produced.
-  doExport(state.items);
+// ===== EXPORT (two-tap, always-latest) =====
+// Why two taps:
+//  - On iOS the cached state.items can lag behind Firebase whenever the tab was
+//    backgrounded (phone locked, app switched) -- the realtime socket suspends,
+//    so an item counted on ANOTHER device may not have synced back yet. Exporting
+//    straight from state.items is what made already-counted items show as 0.
+//  - But iOS only allows navigator.share() while the tap's "user activation" is
+//    alive, which an async Firebase fetch destroys.
+// Solution: TAP 1 fetches the absolute latest from Firebase and arms the export.
+// TAP 2 (a fresh, valid gesture) actually saves/shares the file. So every export
+// is guaranteed to reflect the newest counts from every device.
+let _pendingExport = null;
+let _exportResetTimer = null;
+
+function _resetExportBtn() {
+  const btn = document.querySelector('.btn-export');
+  if (btn) { btn.textContent = '\u2193 CSV'; btn.disabled = false; btn.style.background = ''; }
+  _pendingExport = null;
+  clearTimeout(_exportResetTimer);
 }
 
-function doExport(items) {
-  if (!items || !items.length) { showToast('No items to export yet','error'); return; }
+window.exportData = function() {
+  const btn = document.querySelector('.btn-export');
+
+  // TAP 2 -- data already fetched, save it now within this fresh user gesture
+  if (_pendingExport) {
+    const p = _pendingExport;
+    _resetExportBtn();
+    shareOrDownload(p.blob, p.filename, p.count);
+    return;
+  }
+
+  // TAP 1 -- pull the ABSOLUTE LATEST straight from Firebase (not cached state)
+  if (btn) { btn.textContent = '\u23F3 Latest\u2026'; btn.disabled = true; }
+  get(ref(db,'stocktaking/items')).then(function(snap){
+    const raw = snap.val() || {};
+    const items = Object.entries(raw).map(function(e){ return Object.assign({id:e[0]}, e[1]); });
+    _prepareExport(items, btn);
+  }).catch(function(){
+    _prepareExport(state.items, btn);              // offline fallback: use on-screen data
+    showToast('Offline? Using current on-screen data','error');
+  });
+};
+
+function _prepareExport(items, btn) {
+  if (!items || !items.length) { showToast('No items to export yet','error'); _resetExportBtn(); return; }
   const today = new Date().toLocaleDateString('en-MY',{day:'2-digit',month:'2-digit',year:'numeric'});
   const headers = ['\u5546\u54c1\u540d\u79f0','\u6761\u7801','\u5546\u54c1\u5206\u7c7b','\u5e93\u5b58','Shop physical Stock'];
   const rows = items.map(item=>[item.name||'',item.barcode||'',item.category||'',item.system||0,item.physical||0]);
   const csv = '\uFEFF' + [headers,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
   const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const filename = 'TMOMO_Taman_Connaught_StockTake_'+today.replace(/\//g,'-')+'.csv';
+  _pendingExport = { blob: blob, filename: filename, count: items.length };
+  if (btn) { btn.textContent = '\u2713 Save ('+items.length+')'; btn.disabled = false; btn.style.background = '#16a34a'; }
+  showToast('Latest data ready \u2014 '+items.length+' items. Tap \u2193 again to save','success');
+  clearTimeout(_exportResetTimer);
+  _exportResetTimer = setTimeout(_resetExportBtn, 25000);   // auto-revert if ignored
+}
+
+function shareOrDownload(blob, filename, count) {
   const file = new File([blob],filename,{type:'text/csv'});
-  // iOS / mobile: open the native Share Sheet (Save to Files, WhatsApp, etc.)
   if (navigator.canShare && navigator.canShare({files:[file]})) {
     navigator.share({files:[file],title:'StockTake Export'})
-      .then(function(){ showToast('Exported '+items.length+' items!','success'); })
+      .then(function(){ showToast('Exported '+count+' items!','success'); })
       .catch(function(err){
-        if (err && err.name === 'AbortError') return;   // user closed the sheet, do nothing
-        dlBlob(blob,filename,items.length);             // desktop / unsupported fallback
+        if (err && err.name === 'AbortError') return;       // user closed the sheet
+        dlBlob(blob,filename,count);
       });
   } else {
-    dlBlob(blob,filename,items.length);
+    dlBlob(blob,filename,count);
   }
 }
 function dlBlob(blob,filename,count) {
@@ -1108,6 +1149,19 @@ function dlBlob(blob,filename,count) {
   setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
   showToast('Exported '+count+' items!','success');
 }
+
+// Keep the on-screen data fresh: whenever the tab regains focus (after the phone
+// was locked or the app was switched), force a re-sync from Firebase so the cards
+// and stats reflect counts made elsewhere.
+document.addEventListener('visibilitychange', function(){
+  if (document.hidden) return;
+  get(ref(db,'stocktaking/items')).then(function(snap){
+    const raw = snap.val() || {};
+    state.items = Object.entries(raw).map(function(e){ return Object.assign({id:e[0]}, e[1]); });
+    window._stateItems = state.items;
+    if (typeof updateStats === 'function') updateStats();
+  }).catch(function(){});
+});
 
 window.showToast = function(msg,type) {
   const t = document.getElementById('toast');
