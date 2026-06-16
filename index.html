@@ -231,11 +231,9 @@ header{
 .scanner-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:300;flex-direction:column;align-items:center;justify-content:center;}
 .scanner-overlay.open{display:flex;}
 .scanner-box{width:min(88vw,380px);}
-.scanner-box video{border-radius:16px;}
 .scanner-close{position:absolute;top:calc(env(safe-area-inset-top,0px) + 20px);right:20px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:22px;border-radius:50%;width:46px;height:46px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .scanner-label{color:rgba(255,255,255,0.6);font-size:13px;margin-top:16px;text-align:center;font-family:var(--sans);}
-#html5-qrcode-button-camera-permission,#html5-qrcode-button-camera-stop,#html5-qrcode-anchor-scan-type-change{display:none!important;}
-#html5-qr-code-full-region{border:none!important;}
+#scannerVideo{width:100%;border-radius:16px;display:block;background:#111;min-height:220px;}
 .search-wrap input:focus{border-color:var(--gold);box-shadow:inset 0 3px 0 rgba(0,0,0,0.2),0 0 0 3px rgba(255,217,61,0.15);}
 .search-wrap input::placeholder{color:var(--muted);}
 .filter-select{background:var(--card);border:2px solid var(--border2);color:var(--text);padding:12px 10px;border-radius:14px;font-family:var(--sans);font-size:16px;outline:none;-webkit-appearance:none;cursor:pointer;box-shadow:inset 0 3px 0 rgba(0,0,0,0.2);font-weight:600;}
@@ -1618,46 +1616,83 @@ window.forwardItem = function(itemId) {
 
 // ===== BARCODE SCANNER =====
 (function(){
-  let scanner = null;
-  let scannerRunning = false;
+  var _stream = null;
+  var _scanLoop = null;
 
-  window.openScanner = function() {
-    const overlay = document.getElementById('scannerOverlay');
+  function onFound(text) {
+    stopStream();
+    document.getElementById('searchInput').value = text.trim();
+    renderItems();
+    closeScanner();
+    showToast('Scanned: ' + text.trim(), 'success');
+  }
+
+  function stopStream() {
+    if (_scanLoop) { cancelAnimationFrame(_scanLoop); _scanLoop = null; }
+    if (_stream) { _stream.getTracks().forEach(function(t){ t.stop(); }); _stream = null; }
+    var v = document.getElementById('scannerVideo');
+    if (v) v.srcObject = null;
+  }
+
+  async function startLiveScan() {
+    var overlay = document.getElementById('scannerOverlay');
     overlay.classList.add('open');
     lockBodyScroll();
-
-    if (!scanner) {
-      scanner = new Html5Qrcode('scannerContainer');
+    try {
+      _stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      var video = document.getElementById('scannerVideo');
+      video.srcObject = _stream;
+      await video.play();
+      var detector = new BarcodeDetector({ formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code','itf'] });
+      function scan() {
+        if (!_stream) return;
+        detector.detect(video).then(function(codes) {
+          if (codes.length > 0) onFound(codes[0].rawValue);
+          else _scanLoop = requestAnimationFrame(scan);
+        }).catch(function(){ _scanLoop = requestAnimationFrame(scan); });
+      }
+      _scanLoop = requestAnimationFrame(scan);
+    } catch(e) {
+      showToast('Camera permission denied', 'error');
+      closeScanner();
     }
+  }
 
-    Html5Qrcode.getCameras().then(cameras => {
-      if (!cameras || !cameras.length) { showToast('No camera found','error'); closeScanner(); return; }
-      const backCam = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length-1];
-      scanner.start(
-        backCam.id,
-        { fps: 10, qrbox: { width: 240, height: 120 }, aspectRatio: 1.5 },
-        function(decodedText) {
-          const inp = document.getElementById('searchInput');
-          inp.value = decodedText.trim();
-          renderItems();
-          closeScanner();
-          showToast('Scanned: ' + decodedText.trim(), 'success');
-        },
-        function() {}
-      ).then(() => { scannerRunning = true; }).catch(err => {
-        showToast('Camera error','error');
-        closeScanner();
-      });
-    }).catch(() => { showToast('Camera permission denied','error'); closeScanner(); });
+  window.openScanner = function() {
+    if ('BarcodeDetector' in window) {
+      startLiveScan();
+    } else {
+      // iOS fallback: file capture
+      document.getElementById('barcodeCaptureInput').click();
+    }
   };
 
   window.closeScanner = function() {
-    const overlay = document.getElementById('scannerOverlay');
-    overlay.classList.remove('open');
+    stopStream();
+    document.getElementById('scannerOverlay').classList.remove('open');
     unlockBodyScroll();
-    if (scanner && scannerRunning) {
-      scanner.stop().then(() => { scannerRunning = false; }).catch(() => { scannerRunning = false; });
-    }
+  };
+
+  window.handleBarcodeCapture = function(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    input.value = '';
+    var tmpId = 'qrtmp' + Date.now();
+    var tmpEl = document.createElement('div');
+    tmpEl.id = tmpId;
+    tmpEl.style.cssText = 'display:none;position:absolute;';
+    document.body.appendChild(tmpEl);
+    var s = new Html5Qrcode(tmpId);
+    s.scanFile(file, false).then(function(text) {
+      document.getElementById('searchInput').value = text.trim();
+      renderItems();
+      showToast('Scanned: ' + text.trim(), 'success');
+    }).catch(function() {
+      showToast('No barcode found — try again', 'error');
+    }).finally(function() {
+      try { s.clear(); } catch(e){}
+      tmpEl.remove();
+    });
   };
 
   document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeScanner(); });
@@ -1680,10 +1715,11 @@ window.forwardItem = function(itemId) {
   document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
 })();
 </script>
+<input type="file" id="barcodeCaptureInput" accept="image/*" capture="environment" style="display:none" onchange="handleBarcodeCapture(this)">
 <div class="scanner-overlay" id="scannerOverlay">
   <button class="scanner-close" onclick="closeScanner()">✕</button>
   <div class="scanner-box">
-    <div id="scannerContainer"></div>
+    <video id="scannerVideo" autoplay playsinline muted></video>
   </div>
   <div class="scanner-label">Aim camera at barcode</div>
 </div>
