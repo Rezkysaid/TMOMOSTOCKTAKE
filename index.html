@@ -1702,6 +1702,13 @@ window.forwardItem = function(itemId) {
   };
 
   document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeScanner(); });
+
+  // Wire change event via JS — iOS Safari ignores onchange attr on off-screen inputs
+  // Use setTimeout so the input element exists in DOM before we query it
+  setTimeout(function() {
+    var cap = document.getElementById('barcodeCaptureInput');
+    if (cap) cap.addEventListener('change', function() { window.handleBarcodeCapture(this); });
+  }, 0);
 })();
 
 // ===== EXTRA ZOOM LOCK =====
@@ -1721,7 +1728,7 @@ window.forwardItem = function(itemId) {
   document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
 })();
 </script>
-<input type="file" id="barcodeCaptureInput" accept="image/*" capture="environment" style="display:none" onchange="handleBarcodeCapture(this)">
+<input type="file" id="barcodeCaptureInput" accept="image/*" capture="environment" style="position:fixed;top:-200px;left:-200px;opacity:0;width:1px;height:1px;pointer-events:none;">
 <div class="scanner-overlay" id="scannerOverlay">
   <button class="scanner-close" onclick="closeScanner()">✕</button>
   <div class="scanner-box">
