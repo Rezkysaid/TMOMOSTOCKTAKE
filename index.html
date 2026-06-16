@@ -2,6 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>
+// TEMPORARY DEBUG AID -- catches ANY js error anywhere on the page (not just
+// inside the scan feature) and shows it as a plain alert so it's visible even
+// without a browser dev console. Remove once the camera issue is found.
+window.addEventListener('error', function(e){
+  alert('JS ERROR: ' + e.message + '\n@ line ' + e.lineno + ':' + e.colno);
+});
+window.addEventListener('unhandledrejection', function(e){
+  alert('PROMISE ERROR: ' + (e.reason && (e.reason.message||e.reason) || e.reason));
+});
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>StockTake Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -1326,6 +1337,8 @@ async function _getOcrWorker() {
 }
 
 window.openScan = async function() {
+  alert('Button tapped \u2014 openScan started'); // TEMP DEBUG, will remove after we find the bug
+  try {
   document.getElementById('scanModal').classList.add('open');
   document.getElementById('scanStatus').textContent = 'Loading scanner…';
   document.getElementById('scanStatus').className = 'scan-status';
@@ -1369,6 +1382,9 @@ window.openScan = async function() {
     else if (err && err.name === 'NotReadableError') msg = '⚠️ Camera is busy/in use by another app. Close other camera apps and retry.';
     else msg = '⚠️ ' + (err && (err.message || err.name) || 'Unknown error starting scanner') + ' — tap ✕ and try again, or use manual search.';
     document.getElementById('scanStatus').textContent = msg;
+  }
+  } catch(outerErr) {
+    alert('OUTER ERROR in openScan: ' + (outerErr && outerErr.message || outerErr)); // TEMP DEBUG
   }
 };
 
