@@ -229,6 +229,26 @@ header{
 .search-wrap input:focus{border-color:var(--gold);box-shadow:inset 0 3px 0 rgba(0,0,0,0.2),0 0 0 3px rgba(255,217,61,0.15);}
 .search-wrap input::placeholder{color:var(--muted);}
 .filter-select{background:var(--card);border:2px solid var(--border2);color:var(--text);padding:12px 10px;border-radius:14px;font-family:var(--sans);font-size:16px;outline:none;-webkit-appearance:none;cursor:pointer;box-shadow:inset 0 3px 0 rgba(0,0,0,0.2);font-weight:600;}
+.btn-scan{flex:0 0 auto;background:var(--card);border:2px solid var(--border2);border-radius:14px;font-size:18px;width:46px;cursor:pointer;box-shadow:inset 0 3px 0 rgba(0,0,0,0.1);}
+.scan-overlay{display:none;position:fixed;inset:0;background:#000;z-index:300;flex-direction:column;}
+.scan-overlay.open{display:flex;}
+.scan-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:rgba(0,0,0,0.6);color:#fff;font-family:var(--sans);font-weight:700;font-size:14px;}
+.scan-header button{background:rgba(255,255,255,0.15);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:16px;cursor:pointer;}
+.scan-video-wrap{flex:1;position:relative;overflow:hidden;background:#000;}
+.scan-video-wrap video{width:100%;height:100%;object-fit:cover;}
+.scan-guide{position:absolute;left:8%;right:8%;top:50%;height:60px;transform:translateY(-50%);border:3px solid #fbbf24;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,0.45);}
+.scan-status{position:absolute;left:0;right:0;bottom:24px;text-align:center;color:#fff;font-family:var(--sans);font-weight:700;font-size:13px;text-shadow:0 1px 4px rgba(0,0,0,0.6);padding:0 20px;}
+.scan-status.found{color:#34d399;}
+.scan-footer{padding:16px 18px 28px;background:rgba(0,0,0,0.6);text-align:center;}
+.scan-footer button{background:none;border:none;color:#a5b4fc;font-family:var(--sans);font-weight:700;font-size:13px;text-decoration:underline;cursor:pointer;}
+.scan-confirm{position:absolute;left:16px;right:16px;bottom:90px;background:var(--card);border-radius:18px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,0.4);display:none;}
+.scan-confirm.show{display:block;}
+.scan-confirm .sc-name{font-family:var(--sans);font-weight:800;font-size:14px;color:var(--text);margin-bottom:3px;}
+.scan-confirm .sc-bc{font-family:var(--sans);font-size:12px;color:var(--muted);margin-bottom:12px;}
+.scan-confirm .sc-btns{display:flex;gap:10px;}
+.scan-confirm .sc-btns button{flex:1;padding:11px;border-radius:12px;font-family:var(--sans);font-weight:800;font-size:13px;border:none;cursor:pointer;}
+.scan-confirm .sc-yes{background:var(--green);color:#fff;}
+.scan-confirm .sc-no{background:var(--surface);color:var(--muted2);}
 
 
 /* ITEMS - MODERN TECHY BLUE */
@@ -563,6 +583,7 @@ body.dark .chat-name-input { background: #0d1228; border-color: #1e2d52; color: 
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
 </head>
 <body>
 
@@ -635,6 +656,7 @@ body.dark .chat-name-input { background: #0d1228; border-color: #1e2d52; color: 
       <span class="search-icon">⌕</span>
       <input type="text" id="searchInput" placeholder="Search barcode or name..." inputmode="numeric" pattern="[0-9]*" oninput="renderItems()">
     </div>
+    <button class="btn-scan" onclick="openScan()" title="Scan barcode number">📷</button>
     <select class="filter-select" id="filterStatus" onchange="renderItems()">
       <option value="all">All</option>
       <option value="match">Matched</option>
@@ -650,6 +672,30 @@ body.dark .chat-name-input { background: #0d1228; border-color: #1e2d52; color: 
 </div>
 
 <div class="watermark">Created by <span>Ali Tmomo</span></div>
+
+<!-- SCAN MODAL -->
+<div class="scan-overlay" id="scanModal">
+  <div class="scan-header">
+    <span>📷 Scan the NUMBER under the barcode</span>
+    <button onclick="closeScan()">✕</button>
+  </div>
+  <div class="scan-video-wrap">
+    <video id="scanVideo" autoplay playsinline muted></video>
+    <div class="scan-guide"></div>
+    <div class="scan-confirm" id="scanConfirm">
+      <div class="sc-name" id="scNameTxt"></div>
+      <div class="sc-bc" id="scBcTxt"></div>
+      <div class="sc-btns">
+        <button class="sc-no" onclick="scanConfirmNo()">Keep scanning</button>
+        <button class="sc-yes" onclick="scanConfirmYes()">✓ Yes, open it</button>
+      </div>
+    </div>
+    <div class="scan-status" id="scanStatus">Loading scanner…</div>
+  </div>
+  <div class="scan-footer">
+    <button onclick="closeScan()">Type barcode manually instead</button>
+  </div>
+</div>
 
 <!-- ITEM MODAL -->
 <div class="modal-overlay" id="itemModal">
@@ -1241,6 +1287,164 @@ if (_btnSum) _btnSum.addEventListener('click', () => {
   document.getElementById('chatOverlay').classList.add('open');
   showToast('Summary ready! Tap ➤ to send.', 'success');
 });
+
+// ===== BARCODE NUMBER SCAN (OCR, not pattern-decode) =====
+// We read the printed DIGIT STRING under the barcode (plain text OCR), then
+// match it against the barcodes already loaded in state.items. Matching
+// against our own known list is what makes this reliable: the OCR doesn't
+// need to be perfect, it just needs to land close enough to ONE barcode we
+// already know exists. Exact matches open the item immediately; close
+// (1-character-off) matches ask for a quick confirm tap first, since a wrong
+// jump would mean counting the wrong product.
+let _ocrWorker = null;
+let _scanStream = null;
+let _scanTimer = null;
+let _scanBusy = false;
+let _scanCandidateId = null;
+
+function _levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  if (Math.abs(m-n) > 2) return 99; // quick reject, save time on obviously-too-different lengths
+  const dp = Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
+  for (let j=0;j<=n;j++) dp[0][j]=j;
+  for (let i=1;i<=m;i++) for (let j=1;j<=n;j++)
+    dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+async function _getOcrWorker() {
+  if (_ocrWorker) return _ocrWorker;
+  // Tesseract.js loads as a deferred classic script -- wait for it if the
+  // camera modal was opened before the library finished downloading.
+  let tries = 0;
+  while (!window.Tesseract && tries < 50) { await new Promise(r=>setTimeout(r,100)); tries++; }
+  if (!window.Tesseract) throw new Error('Tesseract failed to load');
+  const w = await window.Tesseract.createWorker('eng');
+  await w.setParameters({ tessedit_char_whitelist: '0123456789', tessedit_pageseg_mode: '7' });
+  _ocrWorker = w;
+  return w;
+}
+
+window.openScan = async function() {
+  document.getElementById('scanModal').classList.add('open');
+  document.getElementById('scanStatus').textContent = 'Loading scanner…';
+  document.getElementById('scanStatus').className = 'scan-status';
+  document.getElementById('scanConfirm').classList.remove('show');
+  try {
+    _scanStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+    const video = document.getElementById('scanVideo');
+    video.srcObject = _scanStream;
+    await video.play();
+    await _getOcrWorker();
+    document.getElementById('scanStatus').textContent = 'Align the NUMBER in the box';
+    _scanTimer = setInterval(_scanTick, 700);
+  } catch (err) {
+    const msg = (err && err.name === 'NotAllowedError')
+      ? 'Camera permission denied. Enable it in Settings > Safari > Camera.'
+      : 'Could not start camera/scanner.';
+    document.getElementById('scanStatus').textContent = msg;
+  }
+};
+
+window.closeScan = function() {
+  clearInterval(_scanTimer); _scanTimer = null;
+  if (_scanStream) { _scanStream.getTracks().forEach(t=>t.stop()); _scanStream = null; }
+  document.getElementById('scanModal').classList.remove('open');
+  document.getElementById('scanConfirm').classList.remove('show');
+  _scanCandidateId = null;
+};
+
+async function _scanTick() {
+  if (_scanBusy || _scanCandidateId) return; // paused while a confirm is showing
+  _scanBusy = true;
+  try {
+    const video = document.getElementById('scanVideo');
+    const guide = document.querySelector('.scan-guide');
+    if (!video.videoWidth) { _scanBusy = false; return; }
+    const vRect = video.getBoundingClientRect();
+    const gRect = guide.getBoundingClientRect();
+    const scaleX = video.videoWidth / vRect.width;
+    const scaleY = video.videoHeight / vRect.height;
+    const sx = (gRect.left - vRect.left) * scaleX;
+    const sy = (gRect.top - vRect.top) * scaleY;
+    const sw = gRect.width * scaleX;
+    const sh = gRect.height * scaleY;
+
+    const crop = document.createElement('canvas');
+    const ZOOM = 2.5; // upscale the thin digit strip -- OCR engines read larger text far more reliably
+    crop.width = sw * ZOOM; crop.height = sh * ZOOM;
+    const ctx = crop.getContext('2d');
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, crop.width, crop.height);
+    // grayscale + threshold: cheap contrast boost that helps OCR a lot
+    const id = ctx.getImageData(0,0,crop.width,crop.height);
+    const d = id.data;
+    for (let i=0;i<d.length;i+=4){
+      const g = 0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+      const v = g > 130 ? 255 : 0;
+      d[i]=d[i+1]=d[i+2]=v;
+    }
+    ctx.putImageData(id,0,0);
+
+    const worker = await _getOcrWorker();
+    const { data } = await worker.recognize(crop);
+    const digits = (data.text||'').replace(/\D/g,'');
+    if (digits.length >= 6) _tryMatch(digits);
+  } catch(e) { /* ignore a failed frame, just try again next tick */ }
+  _scanBusy = false;
+}
+
+function _tryMatch(digits) {
+  const items = state.items || [];
+  // 1) exact match -- highest confidence, jump straight in, no confirm needed
+  let hit = items.find(i => (i.barcode||'').trim() === digits);
+  if (hit) { _scanSuccess(hit, true); return; }
+
+  // 2) close match (off by 1 char) -- only act if there's exactly ONE such
+  //    item, so an ambiguous read never silently picks the wrong product
+  const close = items.filter(i => {
+    const bc = (i.barcode||'').trim();
+    return bc.length >= 6 && _levenshtein(bc, digits) === 1;
+  });
+  if (close.length === 1) { _scanSuccess(close[0], false); }
+}
+
+function _scanSuccess(item, exact) {
+  if (_scanCandidateId === item.id) return;
+  if (exact) {
+    clearInterval(_scanTimer); _scanTimer = null;
+    if (_scanStream) { _scanStream.getTracks().forEach(t=>t.stop()); _scanStream = null; }
+    document.getElementById('scanModal').classList.remove('open');
+    document.getElementById('searchInput').value = item.barcode;
+    renderItems();
+    editItem(item.id);
+    showToast('Found: ' + item.name, 'success');
+    return;
+  }
+  // close-but-not-exact: ask first
+  _scanCandidateId = item.id;
+  document.getElementById('scNameTxt').textContent = item.name;
+  document.getElementById('scBcTxt').textContent = 'Barcode: ' + item.barcode;
+  document.getElementById('scanConfirm').classList.add('show');
+  document.getElementById('scanStatus').textContent = 'Possible match found';
+}
+
+window.scanConfirmYes = function() {
+  const id = _scanCandidateId;
+  closeScan();
+  if (id) {
+    const item = (state.items||[]).find(i=>i.id===id);
+    if (item) document.getElementById('searchInput').value = item.barcode;
+    renderItems();
+    editItem(id);
+  }
+};
+window.scanConfirmNo = function() {
+  _scanCandidateId = null;
+  document.getElementById('scanConfirm').classList.remove('show');
+  document.getElementById('scanStatus').textContent = 'Align the NUMBER in the box';
+};
 
 </script>
 
