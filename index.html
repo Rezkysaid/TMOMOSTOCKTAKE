@@ -1243,6 +1243,31 @@ body.dark .chat-text-input{background:#0d1228;border-color:#1e2d52;color:#e8eeff
 </div>
 
 <script>
+// Theme toggle
+(function() {
+  try {
+    var saved = localStorage.getItem('theme') || 'light';
+    if (saved === 'dark') {
+      document.body.classList.add('dark');
+      document.documentElement.classList.add('dark-html');
+      document.documentElement.style.backgroundColor = '#080c1a';
+      var b = document.getElementById('themeToggle');
+      if (b) b.textContent = '☀️';
+    }
+  } catch(e) {}
+})();
+
+function toggleTheme() {
+  var isDark = document.body.classList.toggle('dark');
+  document.documentElement.classList.toggle('dark-html', isDark);
+  document.documentElement.style.backgroundColor = isDark ? '#080c1a' : '#f0f4ff';
+  var btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+  try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch(e) {}
+}
+</script>
+
+<script>
 // Global forward function - accessible from onclick in card template
 window.forwardItem = function(itemId) {
   var items = window._stateItems || [];
