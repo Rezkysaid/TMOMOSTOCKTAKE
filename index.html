@@ -240,6 +240,13 @@ header{
   overflow:hidden;
   animation:fadeIn 0.2s ease;
   box-shadow:var(--shadow-sm);
+  -webkit-user-select:none;
+  user-select:none;
+}
+.item-card.sharing {
+  border-left-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.2);
+  transition: all 0.2s;
 }
 
 .panel-top{
@@ -816,7 +823,7 @@ function itemCardHTML(item) {
         ${(item.updatedAt||item.addedAt)?`<div class="item-timestamp">🕐 ${formatDate(item.updatedAt||item.addedAt)}</div>`:''}
       </div>
       <div class="panel-actions">
-        <button class="ibtn ibtn-fwd" onclick="forwardItem('${item.id}')" title="Share to chat">📤</button>
+        <button class="ibtn ibtn-fwd" onclick="forwardItem('${item.id}')">📤</button>
         <button class="ibtn" onclick="editItem('${item.id}')">✎</button>
         <button class="ibtn ibtn-del" onclick="deleteItem('${item.id}')">✕</button>
       </div>
@@ -1140,7 +1147,7 @@ window.sendSummaryToChat = function() {
   showToast('Summary ready! Tap ➤ to send.', 'success');
 };
 
-// Forward handled via window.forwardItem onclick
+// Forward handled via plain script window.forwardItem
 
 // Summary button
 const _btnSum = document.getElementById('btnSummary');
@@ -1236,6 +1243,25 @@ body.dark .chat-text-input{background:#0d1228;border-color:#1e2d52;color:#e8eeff
 </div>
 
 <script>
+// Global forward function - accessible from onclick in card template
+window.forwardItem = function(itemId) {
+  var items = window._stateItems || [];
+  var snap = null;
+  for (var i = 0; i < items.length; i++) { if (items[i].id === itemId) { snap = items[i]; break; } }
+  if (!snap) return;
+  var physical = snap.physical || 0;
+  var system = snap.system || 0;
+  var diff = physical - system;
+  var diffStr = diff > 0 ? '+'+diff : ''+diff;
+  var status = diff === 0 ? '✅ Matched' : (physical === 0 ? '🔴 Uncounted' : '⚠️ Mismatch');
+  var msg = '📦 ' + (snap.category||'') + '\n' + snap.name + '\n🔢 ' + (snap.barcode||'-') + '\nPhysical: ' + physical + ' | System: ' + system + ' | Diff: ' + diffStr + '\n' + status;
+  document.getElementById('chatInput').value = msg;
+  document.getElementById('chatOverlay').classList.add('open');
+  // Brief flash on the fab button
+  var fab = document.getElementById('chatFab');
+  if (fab) { fab.style.transform = 'scale(1.3)'; setTimeout(function(){ fab.style.transform=''; }, 300); }
+};
+
 (function() {
   var CHAT_DB = 'https://stock-tacking-default-rtdb.asia-southeast1.firebasedatabase.app/stocktaking/chat';
   var isOpen = false;
