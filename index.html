@@ -754,6 +754,7 @@ const db = getDatabase(app);
 let state = { categories:[], items:[] };
 let activeCategory = 'all';
 let editingId = null;
+alert('CHECKPOINT 1: module script started'); // TEMP DEBUG
 
 document.getElementById('sessionDate').textContent =
   new Date().toLocaleDateString('en-MY',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
@@ -1485,6 +1486,7 @@ window.scanConfirmNo = function() {
   document.getElementById('scanConfirm').classList.remove('show');
   document.getElementById('scanStatus').textContent = 'Align the NUMBER in the box';
 };
+alert('CHECKPOINT 2: module script reached the end. typeof openScan = ' + typeof window.openScan); // TEMP DEBUG
 
 </script>
 
