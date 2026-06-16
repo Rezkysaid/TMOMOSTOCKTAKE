@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>StockTake Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -85,6 +85,8 @@ html {
     radial-gradient(ellipse at 80% 100%, rgba(107,127,255,0.06) 0%, transparent 60%);
   min-height: 100%;
   transition: background 0.3s;
+  touch-action: pan-y;       /* allow normal up/down scroll, block pinch-zoom */
+  -webkit-text-size-adjust: 100%;  /* stop Safari auto-resizing text */
 }
 html.dark-html {
   background-image: 
@@ -95,6 +97,7 @@ body{
   background: transparent;
   color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh;
   transition: color 0.3s;
+  touch-action: pan-y;
 }
 
 /* HEADER */
@@ -222,10 +225,10 @@ header{
 .search-wrap{display:flex;gap:8px;margin-bottom:14px;}
 .search-input-wrap{flex:1;position:relative;}
 .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none;}
-.search-wrap input{width:100%;background:var(--card);border:2px solid var(--border2);color:var(--text);padding:12px 14px 12px 36px;border-radius:14px;font-family:var(--sans);font-size:13px;outline:none;transition:border-color 0.2s;box-shadow:inset 0 3px 0 rgba(0,0,0,0.2);font-weight:500;}
+.search-wrap input{width:100%;background:var(--card);border:2px solid var(--border2);color:var(--text);padding:12px 14px 12px 36px;border-radius:14px;font-family:var(--sans);font-size:16px;outline:none;transition:border-color 0.2s;box-shadow:inset 0 3px 0 rgba(0,0,0,0.2);font-weight:500;}
 .search-wrap input:focus{border-color:var(--gold);box-shadow:inset 0 3px 0 rgba(0,0,0,0.2),0 0 0 3px rgba(255,217,61,0.15);}
 .search-wrap input::placeholder{color:var(--muted);}
-.filter-select{background:var(--card);border:2px solid var(--border2);color:var(--text);padding:12px 10px;border-radius:14px;font-family:var(--sans);font-size:12px;outline:none;-webkit-appearance:none;cursor:pointer;box-shadow:inset 0 3px 0 rgba(0,0,0,0.2);font-weight:600;}
+.filter-select{background:var(--card);border:2px solid var(--border2);color:var(--text);padding:12px 10px;border-radius:14px;font-family:var(--sans);font-size:16px;outline:none;-webkit-appearance:none;cursor:pointer;box-shadow:inset 0 3px 0 rgba(0,0,0,0.2);font-weight:600;}
 
 
 /* ITEMS - MODERN TECHY BLUE */
@@ -337,7 +340,7 @@ header{
 .modal h2{font-size:17px;font-weight:700;margin-bottom:18px;color:var(--gold);}
 .form-group{margin-bottom:14px;}
 .form-group label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);margin-bottom:6px;font-family:var(--mono);}
-.form-group input,.form-group select{width:100%;background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:12px 14px;border-radius:12px;font-family:var(--sans);font-size:15px;outline:none;transition:all 0.2s;-webkit-appearance:none;font-weight:500;}
+.form-group input,.form-group select{width:100%;background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:12px 14px;border-radius:12px;font-family:var(--sans);font-size:16px;outline:none;transition:all 0.2s;-webkit-appearance:none;font-weight:500;}
 .form-group input:focus,.form-group select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,91,252,0.12);}
 .form-group input:focus,.form-group select:focus{border-color:var(--gold);}
 .form-group input::placeholder{color:var(--muted);}
@@ -1262,7 +1265,7 @@ body.dark .chat-header-title{color:#e8eeff;}
 .chat-close-btn{width:30px;height:30px;background:#f0f4ff;border:1.5px solid #c5cfff;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#6b7dbc;}
 body.dark .chat-close-btn{background:#1e2d52;border-color:#2a3f70;color:#7b8fc4;}
 .chat-name-row{padding:8px 12px 0;}
-.chat-name-input{width:100%;background:#f0f4ff;border:1.5px solid #c5cfff;color:#0f1535;padding:8px 12px;border-radius:10px;font-family:inherit;font-size:13px;outline:none;box-sizing:border-box;}
+.chat-name-input{width:100%;background:#f0f4ff;border:1.5px solid #c5cfff;color:#0f1535;padding:8px 12px;border-radius:10px;font-family:inherit;font-size:16px;outline:none;box-sizing:border-box;}
 body.dark .chat-name-input{background:#0d1228;border-color:#1e2d52;color:#e8eeff;}
 .chat-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#6b7dbc;gap:8px;}
 .chat-empty .icon{font-size:40px;}
@@ -1281,7 +1284,7 @@ body.dark .chat-msg.theirs .chat-bubble{background:#0d1228;color:#e8eeff;border-
 .chat-del-btn.show{opacity:1;width:auto;}
 .chat-input-row{padding:10px 12px 16px;border-top:1.5px solid #c5cfff;display:flex;gap:8px;align-items:flex-end;flex-shrink:0;background:#fff;}
 body.dark .chat-input-row{background:#111827;border-color:#1e2d52;}
-.chat-text-input{flex:1;background:#f0f4ff;border:1.5px solid #c5cfff;color:#0f1535;padding:10px 12px;border-radius:14px;font-family:inherit;font-size:14px;outline:none;resize:none;min-height:40px;max-height:100px;line-height:1.4;}
+.chat-text-input{flex:1;background:#f0f4ff;border:1.5px solid #c5cfff;color:#0f1535;padding:10px 12px;border-radius:14px;font-family:inherit;font-size:16px;outline:none;resize:none;min-height:40px;max-height:100px;line-height:1.4;}
 body.dark .chat-text-input{background:#0d1228;border-color:#1e2d52;color:#e8eeff;}
 .chat-text-input:focus{border-color:#3b5bfc;}
 .chat-send-btn{width:40px;height:40px;background:#3b5bfc;border:none;border-radius:50%;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;box-shadow:0 2px 10px rgba(59,91,252,0.35);}
@@ -1537,6 +1540,23 @@ window.forwardItem = function(itemId) {
 
   // Poll every 4s
   setInterval(pull, 4000);
+})();
+
+// ===== EXTRA ZOOM LOCK =====
+// Backup for double-tap-zoom: some iOS Safari versions still zoom on a fast
+// double-tap even with touch-action/viewport set above, so block it directly.
+// Single taps on buttons/inputs are untouched -- only a 2nd tap within 300ms
+// gets cancelled, which is exactly the gesture iOS uses to trigger zoom.
+(function(){
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', function(e){
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive:false });
+  // Belt-and-suspenders for the pinch gesture on older WebKit that still fires
+  // these legacy gesture events regardless of touch-action.
+  document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
 })();
 </script>
 </body>
