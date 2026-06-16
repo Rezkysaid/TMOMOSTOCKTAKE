@@ -308,6 +308,16 @@ header{
 .panel-qty-num.warn{color:var(--orange);}
 .panel-qty-num.ok{color:var(--green);}
 .panel-qty-num.neutral{color:var(--muted2);}
+.panel-qty-num.editable{cursor:pointer;}
+.panel-qty-num.editable:active{opacity:0.6;}
+.qty-inline-input{
+  font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:800;
+  width:60px;text-align:center;border:none;border-bottom:2px solid var(--accent);
+  background:transparent;color:inherit;outline:none;letter-spacing:-0.5px;
+  -moz-appearance:textfield;
+}
+.qty-inline-input::-webkit-outer-spin-button,
+.qty-inline-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .panel-label{
   font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
   color:var(--muted);margin-top:4px;font-family:var(--mono);
@@ -760,9 +770,15 @@ onValue(ref(db,'stocktaking'), snap => {
 
       // Update physical qty block
       const physBlock = card.querySelector('.qty-val-physical');
-      if (physBlock) {
+      if (physBlock && physBlock.tagName !== 'INPUT') {
         physBlock.textContent = item.physical||0;
-        physBlock.className = 'panel-qty-num qty-val-physical ' + pc;
+        physBlock.className = 'panel-qty-num qty-val-physical editable ' + pc;
+      }
+
+      // Update system qty block
+      const sysBlock = card.querySelector('.qty-val-system');
+      if (sysBlock && sysBlock.tagName !== 'INPUT') {
+        sysBlock.textContent = item.system||0;
       }
 
       // Update diff block
@@ -831,11 +847,11 @@ function itemCardHTML(item) {
     </div>
     <div class="panel-bottom">
       <div class="panel-qty-block">
-        <div class="panel-qty-num qty-val-physical ${pc}">${item.physical||0}</div>
+        <div class="panel-qty-num qty-val-physical editable ${pc}" onclick="inlineEditQty(this,'${item.id}','physical')">${item.physical||0}</div>
         <div class="panel-label">PHYSICAL</div>
       </div>
       <div class="panel-qty-block">
-        <div class="panel-qty-num neutral">${item.system||0}</div>
+        <div class="panel-qty-num qty-val-system editable neutral" onclick="inlineEditQty(this,'${item.id}','system')">${item.system||0}</div>
         <div class="panel-label">SYSTEM</div>
       </div>
       <div class="panel-qty-block">
@@ -1067,6 +1083,49 @@ window._savePhysical = async function(id, physical, cb) {
     setSyncStatus('synced');
     if (cb) cb();
   } catch(e) { setSyncStatus('error'); showToast('Failed!','error'); }
+}
+
+window._saveSystem = async function(id, system, cb) {
+  setSyncStatus('syncing');
+  try {
+    await update(ref(db,`stocktaking/items/${id}`),{system});
+    setSyncStatus('synced');
+    if (cb) cb();
+  } catch(e) { setSyncStatus('error'); showToast('Failed!','error'); }
+}
+
+window.inlineEditQty = function(el, id, field) {
+  if (el.querySelector('input')) return;
+  const cur = parseInt(el.textContent)||0;
+  const savedClass = el.className;
+  const savedColor = el.style.color;
+
+  el.textContent = '';
+  const inp = document.createElement('input');
+  inp.type = 'number';
+  inp.className = 'qty-inline-input';
+  inp.value = cur;
+  inp.style.color = savedColor || '';
+  el.appendChild(inp);
+  inp.focus();
+  inp.select();
+
+  function commit() {
+    const val = parseInt(inp.value);
+    const newVal = isNaN(val) ? cur : val;
+    el.className = savedClass;
+    el.textContent = newVal;
+    if (newVal !== cur) {
+      if (field === 'physical') window._savePhysical(id, newVal);
+      else window._saveSystem(id, newVal);
+    }
+  }
+
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { inp.blur(); }
+    if (e.key === 'Escape') { el.className = savedClass; el.textContent = cur; }
+  });
 }
 
 // ===== EXPORT (two-tap, always-latest) =====
