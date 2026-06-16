@@ -1069,57 +1069,44 @@ window._savePhysical = async function(id, physical, cb) {
 }
 
 window.exportData = function() {
-  setSyncStatus('syncing');
-  showToast('Fetching latest data...','success');
-
-  let done = false;
-  // Timeout fallback after 4 seconds - use cached state.items if fetch is slow
-  const timeoutId = setTimeout(function() {
-    if (done) return;
-    done = true;
-    doExport(state.items);
-    setSyncStatus('synced');
-    showToast('Using cached data (slow connection)','success');
-  }, 4000);
-
-  get(ref(db,'stocktaking/items')).then(function(snap) {
-    if (done) return;
-    done = true;
-    clearTimeout(timeoutId);
-    const raw = snap.val() || {};
-    const freshItems = Object.entries(raw).map(function(e){ return Object.assign({id:e[0]},e[1]); });
-    doExport(freshItems);
-    setSyncStatus('synced');
-  }).catch(function() {
-    if (done) return;
-    done = true;
-    clearTimeout(timeoutId);
-    doExport(state.items);
-    setSyncStatus('synced');
-  });
+  // state.items is kept live by the onValue listener above, so it is ALWAYS
+  // the latest data already. We export it SYNCHRONOUSLY here -- no async
+  // Firebase get() -- because iOS Safari only allows navigator.share() while
+  // the tap's "user activation" is still alive. Any await/.then() first kills
+  // that activation, which is what made share throw and leave the header
+  // stuck on "Saving" with no file produced.
+  doExport(state.items);
 }
 
 function doExport(items) {
+  if (!items || !items.length) { showToast('No items to export yet','error'); return; }
   const today = new Date().toLocaleDateString('en-MY',{day:'2-digit',month:'2-digit',year:'numeric'});
   const headers = ['\u5546\u54c1\u540d\u79f0','\u6761\u7801','\u5546\u54c1\u5206\u7c7b','\u5e93\u5b58','Shop physical Stock'];
   const rows = items.map(item=>[item.name||'',item.barcode||'',item.category||'',item.system||0,item.physical||0]);
   const csv = '\uFEFF' + [headers,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
   const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const filename = 'TMOMO_Taman_Connaught_StockTake_'+today.replace(/\//g,'-')+'.csv';
-  showToast('Exported ' + items.length + ' items!','success');
   const file = new File([blob],filename,{type:'text/csv'});
-  if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
-    navigator.share({files:[file],title:'StockTake Export'}).catch(function(){ dlBlob(blob,filename); });
-  } else { dlBlob(blob,filename); }
+  // iOS / mobile: open the native Share Sheet (Save to Files, WhatsApp, etc.)
+  if (navigator.canShare && navigator.canShare({files:[file]})) {
+    navigator.share({files:[file],title:'StockTake Export'})
+      .then(function(){ showToast('Exported '+items.length+' items!','success'); })
+      .catch(function(err){
+        if (err && err.name === 'AbortError') return;   // user closed the sheet, do nothing
+        dlBlob(blob,filename,items.length);             // desktop / unsupported fallback
+      });
+  } else {
+    dlBlob(blob,filename,items.length);
+  }
 }
-function dlBlob(blob,filename) {
+function dlBlob(blob,filename,count) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href=url; a.download=filename;
   document.body.appendChild(a); a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showToast('Exported!','success');
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  showToast('Exported '+count+' items!','success');
 }
 
 window.showToast = function(msg,type) {
