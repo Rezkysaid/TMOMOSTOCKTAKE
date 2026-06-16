@@ -650,9 +650,14 @@ body.dark .chat-name-input { background: #0d1228; border-color: #1e2d52; color: 
     <div class="search-input-wrap">
       <span class="search-icon">⌕</span>
       <input type="text" id="searchInput" placeholder="Search barcode or name..." inputmode="numeric" pattern="[0-9]*" oninput="renderItems()">
-      <button class="scan-btn" onclick="openScanner()" title="Scan barcode">
+      <!-- Android/Chrome: button opens live scanner -->
+      <button id="scanBtn" class="scan-btn" onclick="openScanner()" title="Scan barcode">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
       </button>
+      <!-- iOS: label directly triggers file input — no JS click() needed -->
+      <label id="scanLabel" for="barcodeCaptureInput" class="scan-btn" title="Scan barcode" style="display:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+      </label>
     </div>
     <select class="filter-select" id="filterStatus" onchange="renderItems()">
       <option value="all">All</option>
@@ -1659,12 +1664,7 @@ window.forwardItem = function(itemId) {
   }
 
   window.openScanner = function() {
-    if ('BarcodeDetector' in window) {
-      startLiveScan();
-    } else {
-      // iOS fallback: file capture
-      document.getElementById('barcodeCaptureInput').click();
-    }
+    startLiveScan();
   };
 
   window.closeScanner = function() {
@@ -1703,9 +1703,13 @@ window.forwardItem = function(itemId) {
 
   document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeScanner(); });
 
-  // Wire change event via JS — iOS Safari ignores onchange attr on off-screen inputs
-  // Use setTimeout so the input element exists in DOM before we query it
+  // Switch to label-based trigger for iOS (no BarcodeDetector)
+  // label[for=] is the only 100% reliable way to open file picker on iOS Safari
   setTimeout(function() {
+    var hasLive = 'BarcodeDetector' in window;
+    document.getElementById('scanBtn').style.display = hasLive ? '' : 'none';
+    document.getElementById('scanLabel').style.display = hasLive ? 'none' : 'flex';
+
     var cap = document.getElementById('barcodeCaptureInput');
     if (cap) cap.addEventListener('change', function() { window.handleBarcodeCapture(this); });
   }, 0);
