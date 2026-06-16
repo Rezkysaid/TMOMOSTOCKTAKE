@@ -686,7 +686,7 @@ body.dark .chat-name-input { background: #0d1228; border-color: #1e2d52; color: 
 <!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, onValue, set, push, remove, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, get, onValue, set, push, remove, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 const app = initializeApp({ databaseURL:'https://stock-tacking-default-rtdb.asia-southeast1.firebasedatabase.app' });
 const db = getDatabase(app);
@@ -1069,15 +1069,32 @@ window._savePhysical = async function(id, physical, cb) {
 }
 
 window.exportData = function() {
+  setSyncStatus('syncing');
+  showToast('Fetching latest data...','success');
+  // Force fresh fetch from Firebase using already-available get + ref + db
+  get(ref(db,'stocktaking/items')).then(function(snap) {
+    const raw = snap.val() || {};
+    const freshItems = Object.entries(raw).map(function(e){ return Object.assign({id:e[0]},e[1]); });
+    doExport(freshItems);
+    setSyncStatus('synced');
+  }).catch(function() {
+    // fallback to state.items
+    doExport(state.items);
+    setSyncStatus('synced');
+  });
+}
+
+function doExport(items) {
   const today = new Date().toLocaleDateString('en-MY',{day:'2-digit',month:'2-digit',year:'numeric'});
   const headers = ['\u5546\u54c1\u540d\u79f0','\u6761\u7801','\u5546\u54c1\u5206\u7c7b','\u5e93\u5b58','Shop physical Stock'];
-  const rows = state.items.map(item=>[item.name||'',item.barcode||'',item.category||'',item.system||0,item.physical||0]);
+  const rows = items.map(item=>[item.name||'',item.barcode||'',item.category||'',item.system||0,item.physical||0]);
   const csv = '\uFEFF' + [headers,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
   const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const filename = 'TMOMO_Taman_Connaught_StockTake_'+today.replace(/\//g,'-')+'.csv';
+  showToast('Exported ' + items.length + ' items!','success');
   const file = new File([blob],filename,{type:'text/csv'});
   if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
-    navigator.share({files:[file],title:'StockTake Export'}).catch(()=>dlBlob(blob,filename));
+    navigator.share({files:[file],title:'StockTake Export'}).catch(function(){ dlBlob(blob,filename); });
   } else { dlBlob(blob,filename); }
 }
 function dlBlob(blob,filename) {
