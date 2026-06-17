@@ -610,7 +610,7 @@ body.dark .chat-name-input { background: #0d1228; border-color: #1e2d52; color: 
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 body:not(.authed)>*:not(#loginGate){display:none!important;}
 body.authed #loginGate{display:none!important;}
-.login-gate{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a1030 0%,#162160 45%,#2138a8 100%);padding:20px;overflow:hidden;}
+.login-gate{position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:max(20px,9vh) 20px 20px;background:linear-gradient(135deg,#0a1030 0%,#162160 45%,#2138a8 100%);overflow:hidden;}
 .login-orb{position:absolute;border-radius:50%;filter:blur(40px);opacity:0.55;animation:loginOrbDrift 14s ease-in-out infinite;}
 .login-orb.o1{width:280px;height:280px;background:#5b7bff;top:-80px;left:-60px;animation-duration:16s;}
 .login-orb.o2{width:220px;height:220px;background:#7b3bfc;bottom:-60px;right:-40px;animation-duration:13s;animation-delay:-4s;}
