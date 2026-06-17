@@ -1828,6 +1828,7 @@ window.forwardItem = function(itemId) {
   // audio chunks (~1.2s each) through the Realtime DB so listeners can
   // start playing while the talker is still holding the button.
   var pttStream = null, pttHeld = false, pttRecorder = null, pttSeq = 0, pttTalkId = null, pttName = '';
+  var pttPending = false, pttCancelRequested = false;
   var pttAudioQueue = [];
   var pttAudioEl = new Audio();
   var pttPlaying = false;
@@ -1848,7 +1849,7 @@ window.forwardItem = function(itemId) {
 
   function pttDown(e) {
     e.preventDefault();
-    if (pttStream) return;
+    if (pttStream || pttPending) return;
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
       window.showToast && window.showToast('Live talk tak disokong pada browser ni', 'error');
       return;
@@ -1857,13 +1858,24 @@ window.forwardItem = function(itemId) {
     myName = name;
     try { localStorage.setItem('tmomoChatName', name); } catch(e2) {}
 
+    // Flip to red immediately on press, before the mic permission promise even
+    // resolves, so it's never ambiguous whether the hold registered.
+    pttPending = true;
+    pttCancelRequested = false;
+    document.getElementById('pttFab').classList.add('active');
+
     navigator.mediaDevices.getUserMedia({ audio: true }).then(function(s) {
+      pttPending = false;
+      if (pttCancelRequested) {
+        s.getTracks().forEach(function(t){ t.stop(); });
+        document.getElementById('pttFab').classList.remove('active');
+        return;
+      }
       pttStream = s;
       pttHeld = true;
       pttSeq = 0;
       pttName = name;
       pttTalkId = 't' + Date.now() + Math.random().toString(36).slice(2, 7);
-      document.getElementById('pttFab').classList.add('active');
 
       fetch(PTT_DB + '/active.json', {
         method: 'PUT', headers: {'Content-Type':'application/json'},
@@ -1878,6 +1890,8 @@ window.forwardItem = function(itemId) {
 
       pttRecordChunk();
     }).catch(function() {
+      pttPending = false;
+      document.getElementById('pttFab').classList.remove('active');
       window.showToast && window.showToast('Microphone access denied', 'error');
     });
   }
@@ -1921,6 +1935,14 @@ window.forwardItem = function(itemId) {
 
   function pttUp(e) {
     if (e) e.preventDefault();
+    if (pttPending) {
+      // Released before the mic permission promise resolved -- cancel cleanly
+      // once it does, but drop the red state right away.
+      pttCancelRequested = true;
+      pttPending = false;
+      document.getElementById('pttFab').classList.remove('active');
+      return;
+    }
     if (!pttHeld) return;
     pttHeld = false;
     document.getElementById('pttFab').classList.remove('active');
