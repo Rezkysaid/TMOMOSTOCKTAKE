@@ -610,28 +610,59 @@ body.dark .chat-name-input { background: #0d1228; border-color: #1e2d52; color: 
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 body:not(.authed)>*:not(#loginGate){display:none!important;}
 body.authed #loginGate{display:none!important;}
-.login-gate{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 20%,#3b5bfc 0%,#1c2c66 45%,#080c1a 100%);padding:20px;}
-.login-card{width:100%;max-width:340px;background:var(--card);border-radius:22px;padding:30px 26px 26px;box-shadow:0 20px 50px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.4);text-align:center;}
-.login-icon{width:58px;height:58px;margin:0 auto 14px;border-radius:50%;background:radial-gradient(circle at 32% 26%,#eafdff 0%,#9ab8ff 30%,#3b5bfc 70%,#1c2c66 100%);box-shadow:inset 0 3px 5px rgba(255,255,255,0.6),inset 0 -4px 7px rgba(0,10,60,0.35),0 6px 14px rgba(59,91,252,0.4);display:flex;align-items:center;justify-content:center;}
-.login-title{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:800;color:var(--text);margin:0 0 4px;}
-.login-sub{font-size:12.5px;color:var(--muted2);margin:0 0 18px;}
-.login-input{width:100%;background:var(--card2);border:2px solid var(--border2);color:var(--text);padding:13px 14px;border-radius:14px;font-family:var(--mono,monospace);font-size:18px;letter-spacing:2px;text-align:center;outline:none;box-shadow:inset 0 3px 0 rgba(0,0,0,0.15);font-weight:700;}
+.login-gate{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a1030 0%,#162160 45%,#2138a8 100%);padding:20px;overflow:hidden;}
+.login-orb{position:absolute;border-radius:50%;filter:blur(40px);opacity:0.55;animation:loginOrbDrift 14s ease-in-out infinite;}
+.login-orb.o1{width:280px;height:280px;background:#5b7bff;top:-80px;left:-60px;animation-duration:16s;}
+.login-orb.o2{width:220px;height:220px;background:#7b3bfc;bottom:-60px;right:-40px;animation-duration:13s;animation-delay:-4s;}
+.login-orb.o3{width:170px;height:170px;background:#3bdfd0;top:55%;left:65%;animation-duration:18s;animation-delay:-8s;}
+@keyframes loginOrbDrift{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(24px,-28px) scale(1.12);}}
+.login-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.05) 1px,transparent 1px);background-size:34px 34px;mask-image:radial-gradient(circle at 50% 35%,rgba(0,0,0,0.9),transparent 70%);}
+.login-card{position:relative;width:100%;max-width:340px;background:rgba(255,255,255,0.92);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.6);border-radius:26px;padding:34px 28px 28px;box-shadow:0 25px 60px rgba(5,10,40,0.55),inset 0 1px 0 rgba(255,255,255,0.8);text-align:center;animation:loginCardIn 0.5s cubic-bezier(.2,.8,.2,1);}
+body.dark .login-card{background:rgba(17,24,39,0.85);border-color:rgba(255,255,255,0.08);}
+@keyframes loginCardIn{0%{opacity:0;transform:translateY(18px) scale(0.96);}100%{opacity:1;transform:translateY(0) scale(1);}}
+.login-brand{display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:18px;}
+.login-brand-mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#4f6fff,#2138a8);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;letter-spacing:-0.5px;box-shadow:0 3px 8px rgba(59,91,252,0.4);}
+.login-brand-name{font-family:'Space Grotesk',sans-serif;font-size:12.5px;font-weight:800;color:var(--muted2);letter-spacing:0.5px;text-transform:uppercase;}
+.login-icon{width:64px;height:64px;margin:0 auto 16px;border-radius:50%;background:radial-gradient(circle at 32% 26%,#eafdff 0%,#9ab8ff 30%,#3b5bfc 70%,#1c2c66 100%);box-shadow:inset 0 3px 5px rgba(255,255,255,0.6),inset 0 -4px 7px rgba(0,10,60,0.35),0 10px 22px rgba(59,91,252,0.45);display:flex;align-items:center;justify-content:center;position:relative;}
+.login-icon::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:1.5px solid rgba(91,123,255,0.4);animation:loginIconRing 2.4s ease-in-out infinite;}
+@keyframes loginIconRing{0%{transform:scale(0.92);opacity:0.8;}70%{transform:scale(1.18);opacity:0;}100%{transform:scale(1.18);opacity:0;}}
+.login-title{font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:800;color:var(--text);margin:0 0 5px;letter-spacing:-0.3px;}
+.login-sub{font-size:13px;color:var(--muted2);margin:0 0 22px;line-height:1.4;}
+.login-input-wrap{position:relative;}
+.login-input{width:100%;background:var(--card2);border:2px solid var(--border2);color:var(--text);padding:14px 14px 14px 42px;border-radius:14px;font-family:var(--mono,monospace);font-size:19px;letter-spacing:3px;text-align:center;outline:none;box-shadow:inset 0 3px 0 rgba(0,0,0,0.12);font-weight:700;transition:border-color 0.2s,box-shadow 0.2s;}
+.login-input:focus{border-color:var(--accent);box-shadow:inset 0 3px 0 rgba(0,0,0,0.12),0 0 0 4px rgba(59,91,252,0.18);}
+.login-input-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--border2);pointer-events:none;}
 .login-input.shake{animation:loginShake 0.4s;border-color:#e63b2e;}
 @keyframes loginShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-6px);}80%{transform:translateX(6px);}}
-.login-btn{width:100%;margin-top:12px;background:var(--accent);color:#fff;border:none;padding:13px;border-radius:14px;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 6px 16px rgba(59,91,252,0.35);}
+.login-btn{width:100%;margin-top:16px;background:linear-gradient(135deg,#5b7bff,#2e48cc);color:#fff;border:none;padding:14px;border-radius:14px;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(59,91,252,0.4);display:flex;align-items:center;justify-content:center;gap:7px;transition:transform 0.15s,box-shadow 0.15s;}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(59,91,252,0.5);}
+.login-btn:active{transform:translateY(0);}
 .login-error{color:#e63b2e;font-size:12px;font-weight:700;margin-top:10px;min-height:14px;}
+.login-footer{margin-top:18px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:10.5px;color:var(--muted2);font-weight:600;}
 </style>
 </head>
 <body>
 
 <div class="login-gate" id="loginGate">
+  <div class="login-orb o1"></div>
+  <div class="login-orb o2"></div>
+  <div class="login-orb o3"></div>
+  <div class="login-grid"></div>
   <div class="login-card">
-    <div class="login-icon"><svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 2a5 5 0 015 5v3h1a1 1 0 011 1v9a1 1 0 01-1 1H6a1 1 0 01-1-1v-9a1 1 0 011-1h1V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v3h6V7a3 3 0 00-3-3zm0 10a1.5 1.5 0 00-1.5 1.5c0 .65.39 1.2.94 1.45L11 19.5h2l-.44-2.55a1.5 1.5 0 00.94-1.45A1.5 1.5 0 0012 14z" fill="#fff"/></svg></div>
-    <h2 class="login-title">Secure Access</h2>
-    <p class="login-sub">Enter your ID to access StockTake Pro</p>
-    <input class="login-input" id="loginIdInput" type="tel" inputmode="numeric" maxlength="4" placeholder="ID">
-    <button class="login-btn" id="loginBtn">Enter</button>
+    <div class="login-brand">
+      <div class="login-brand-mark">S</div>
+      <div class="login-brand-name">StockTake Pro</div>
+    </div>
+    <div class="login-icon"><svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 2a5 5 0 015 5v3h1a1 1 0 011 1v9a1 1 0 01-1 1H6a1 1 0 01-1-1v-9a1 1 0 011-1h1V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v3h6V7a3 3 0 00-3-3zm0 10a1.5 1.5 0 00-1.5 1.5c0 .65.39 1.2.94 1.45L11 19.5h2l-.44-2.55a1.5 1.5 0 00.94-1.45A1.5 1.5 0 0012 14z" fill="#fff"/></svg></div>
+    <h2 class="login-title">Welcome Back</h2>
+    <p class="login-sub">Enter your team ID to continue</p>
+    <div class="login-input-wrap">
+      <span class="login-input-icon"><svg viewBox="0 0 24 24" width="17" height="17"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z" fill="currentColor"/></svg></span>
+      <input class="login-input" id="loginIdInput" type="tel" inputmode="numeric" maxlength="4" placeholder="ID">
+    </div>
+    <button class="login-btn" id="loginBtn"><span>Enter</span><svg viewBox="0 0 24 24" width="15" height="15"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="login-error" id="loginError"></div>
+    <div class="login-footer"><svg viewBox="0 0 24 24" width="11" height="11"><path d="M12 2a5 5 0 015 5v3h1a1 1 0 011 1v9a1 1 0 01-1 1H6a1 1 0 01-1-1v-9a1 1 0 011-1h1V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v3h6V7a3 3 0 00-3-3z" fill="currentColor"/></svg>Authorized personnel only</div>
   </div>
 </div>
 <script>
