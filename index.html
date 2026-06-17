@@ -601,6 +601,7 @@ body.dark .chat-name-input { background: #0d1228; border-color: #1e2d52; color: 
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 body:not(.authed)>*:not(#loginGate){display:none!important;}
+body.authed #loginGate{display:none!important;}
 .login-gate{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 20%,#3b5bfc 0%,#1c2c66 45%,#080c1a 100%);padding:20px;}
 .login-card{width:100%;max-width:340px;background:var(--card);border-radius:22px;padding:30px 26px 26px;box-shadow:0 20px 50px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.4);text-align:center;}
 .login-icon{width:58px;height:58px;margin:0 auto 14px;border-radius:50%;background:radial-gradient(circle at 32% 26%,#eafdff 0%,#9ab8ff 30%,#3b5bfc 70%,#1c2c66 100%);box-shadow:inset 0 3px 5px rgba(255,255,255,0.6),inset 0 -4px 7px rgba(0,10,60,0.35),0 6px 14px rgba(59,91,252,0.4);display:flex;align-items:center;justify-content:center;}
@@ -618,10 +619,10 @@ body:not(.authed)>*:not(#loginGate){display:none!important;}
 <div class="login-gate" id="loginGate">
   <div class="login-card">
     <div class="login-icon"><svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 2a5 5 0 015 5v3h1a1 1 0 011 1v9a1 1 0 01-1 1H6a1 1 0 01-1-1v-9a1 1 0 011-1h1V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v3h6V7a3 3 0 00-3-3zm0 10a1.5 1.5 0 00-1.5 1.5c0 .65.39 1.2.94 1.45L11 19.5h2l-.44-2.55a1.5 1.5 0 00.94-1.45A1.5 1.5 0 0012 14z" fill="#fff"/></svg></div>
-    <h2 class="login-title">Akses Selamat</h2>
-    <p class="login-sub">Masukkan ID anda untuk akses StockTake Pro</p>
+    <h2 class="login-title">Secure Access</h2>
+    <p class="login-sub">Enter your ID to access StockTake Pro</p>
     <input class="login-input" id="loginIdInput" type="tel" inputmode="numeric" maxlength="4" placeholder="ID">
-    <button class="login-btn" id="loginBtn">Masuk</button>
+    <button class="login-btn" id="loginBtn">Enter</button>
     <div class="login-error" id="loginError"></div>
   </div>
 </div>
@@ -646,7 +647,7 @@ body:not(.authed)>*:not(#loginGate){display:none!important;}
     if (TEAM_IDS[id]) {
       grantAccess(id);
     } else {
-      err.textContent = 'ID tidak sah. Sila cuba lagi.';
+      err.textContent = 'Invalid ID. Please try again.';
       input.classList.remove('shake');
       void input.offsetWidth;
       input.classList.add('shake');
