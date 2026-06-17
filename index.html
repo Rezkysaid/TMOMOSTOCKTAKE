@@ -398,12 +398,8 @@ header{
   pointer-events: none;
 }
 .chat-fab:active { transform: scale(0.92); }
-.chat-fab-icon { display: flex; align-items: center; justify-content: center; animation: fabBounce 2s ease-in-out infinite; }
+.chat-fab-icon { display: flex; align-items: center; justify-content: center; }
 .chat-fab-icon svg { display: block; filter: drop-shadow(0 1px 2px rgba(150,90,40,0.3)); }
-@keyframes fabBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-7px); }
-}
 body.dark .chat-fab {
   background: radial-gradient(circle at 32% 26%, #fff3e3 0%, #f3d6b4 28%, #d9a96e 52%, #b9824a 76%, #8c5f30 100%);
   box-shadow: 0 8px 18px rgba(60,35,10,0.55), inset 0 3px 6px rgba(255,255,255,0.5), inset 0 -5px 9px rgba(40,20,5,0.4);
