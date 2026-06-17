@@ -1606,6 +1606,13 @@ window.forwardItem = function(itemId) {
   }
 
   function sendVoice(dataUrl, durationSec) {
+    // Voice notes are stored as base64 inside the Realtime DB, so cap the size
+    // to avoid silent write rejections for over-long recordings (~1.4MB base64).
+    if (!dataUrl || dataUrl.length > 1400000) {
+      window.showToast && window.showToast('Voice note terlalu panjang — cuba pendekkan', 'error');
+      return;
+    }
+
     var ni = document.getElementById('chatNameInput');
     var name = ni.value.trim() || myName || 'Anonymous';
     myName = name;
@@ -1621,12 +1628,29 @@ window.forwardItem = function(itemId) {
     container.appendChild(d);
     container.scrollTop = container.scrollHeight;
 
+    function fail(reason) {
+      if (pending[pk] === d) delete pending[pk];
+      d.remove();
+      window.showToast && window.showToast('Voice note gagal dihantar' + (reason ? ' (' + reason + ')' : ''), 'error');
+    }
+
     fetch(CHAT_DB + '.json', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(m)
-    }).then(function(){ setTimeout(pull, 700); })
-      .catch(function(){ setTimeout(pull, 700); });
+    }).then(function(res){
+      return res.json().catch(function(){ return null; }).then(function(body){
+        return { ok: res.ok, body: body };
+      });
+    }).then(function(r){
+      if (!r.ok || (r.body && r.body.error)) {
+        fail(r.body && r.body.error ? r.body.error : 'server');
+        return;
+      }
+      setTimeout(pull, 700);
+    }).catch(function(){
+      fail('rangkaian');
+    });
   }
 
   function fmtDuration(sec) {
@@ -1698,8 +1722,21 @@ window.forwardItem = function(itemId) {
   var audioChunks = [];
   var recordStartTime = 0;
   var recTimerInt = null;
-  var MAX_REC_MS = 60000;
+  var MAX_REC_MS = 45000;
   var maxRecTimeout = null;
+
+  function pickRecorderOptions() {
+    // Keep files small so they fit comfortably in the Realtime DB (stored as base64).
+    var prefs = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/aac'];
+    if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported) {
+      for (var i = 0; i < prefs.length; i++) {
+        if (MediaRecorder.isTypeSupported(prefs[i])) {
+          return { mimeType: prefs[i], audioBitsPerSecond: 24000 };
+        }
+      }
+    }
+    return { audioBitsPerSecond: 24000 };
+  }
 
   function startRecTimer() {
     var ind = document.getElementById('chatRecIndicator');
@@ -1725,7 +1762,8 @@ window.forwardItem = function(itemId) {
     navigator.mediaDevices.getUserMedia({ audio: true }).then(function(s) {
       micStream = s;
       audioChunks = [];
-      mediaRecorder = new MediaRecorder(s);
+      try { mediaRecorder = new MediaRecorder(s, pickRecorderOptions()); }
+      catch(err) { mediaRecorder = new MediaRecorder(s); }
       mediaRecorder.ondataavailable = function(ev) { if (ev.data.size > 0) audioChunks.push(ev.data); };
       mediaRecorder.onstop = function() {
         micStream.getTracks().forEach(function(t) { t.stop(); });
