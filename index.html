@@ -152,6 +152,14 @@ header{
 .sync-dot.error{background:#f87171;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
 .sync-label{font-size:10px;color:rgba(255,255,255,0.85);font-family:var(--mono);font-weight:700;}
+.user-pill{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,0.15);
+  border:1px solid rgba(255,255,255,0.25);
+  padding:5px 10px;border-radius:20px;
+  font-size:10px;color:rgba(255,255,255,0.9);font-family:var(--sans);font-weight:700;
+}
+.user-pill .avatar{width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,0.85);color:#3b5bfc;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;flex-shrink:0;}
 .btn-export{
   background:rgba(255,255,255,0.18);color:#fff;
   border:1px solid rgba(255,255,255,0.3);
@@ -635,9 +643,11 @@ body.authed #loginGate{display:none!important;}
 
   function grantAccess(id){
     var name = TEAM_IDS[id];
-    try {
-      if (!localStorage.getItem('tmomoChatName')) localStorage.setItem('tmomoChatName', name);
-    } catch(e) {}
+    try { localStorage.setItem('tmomoChatName', name); } catch(e) {}
+    var pill = document.getElementById('userPill');
+    document.getElementById('userPillName').textContent = name;
+    document.getElementById('userAvatar').textContent = name.charAt(0);
+    pill.style.display = 'flex';
     document.body.classList.add('authed');
   }
 
@@ -676,6 +686,10 @@ body.authed #loginGate{display:none!important;}
     </div>
   </div>
   <div class="header-right">
+    <div class="user-pill" id="userPill" style="display:none;">
+      <span class="avatar" id="userAvatar"></span>
+      <span id="userPillName"></span>
+    </div>
     <button class="btn-theme" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode"><svg viewBox="0 0 24 24" width="19" height="19"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="#eafdff"/></svg></button>
     <div class="sync-pill">
       <div class="sync-dot" id="syncDot"></div>
