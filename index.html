@@ -589,7 +589,6 @@ body.dark .chat-name-input { background: #0d1228; border-color: #1e2d52; color: 
   </div>
   <div class="header-right">
     <button class="btn-theme" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
-    <button class="btn-theme" id="btnSummary" title="Send summary to chat" style="font-size:14px;">📊</button>
     <div class="sync-pill">
       <div class="sync-dot" id="syncDot"></div>
       <span class="sync-label" id="syncLabel">—</span>
@@ -1284,25 +1283,6 @@ window.sendSummaryToChat = function() {
 };
 
 // Forward handled via plain script window.forwardItem
-
-// Summary button
-const _btnSum = document.getElementById('btnSummary');
-if (_btnSum) _btnSum.addEventListener('click', () => {
-  const items = window._stateItems || [];
-  const total = items.length;
-  const matched = items.filter(i => (i.physical||0) > 0 && (i.physical||0) === (i.system||0)).length;
-  const mismatch = items.filter(i => (i.physical||0) > 0 && (i.physical||0) !== (i.system||0)).length;
-  const uncounted = items.filter(i => !(i.physical||0)).length;
-  const pct = total ? Math.round(items.filter(i=>(i.physical||0)>0).length/total*100) : 0;
-  const msg = '📊 STOCK TAKE SUMMARY\n━━━━━━━━━━━━━━\n' +
-    '📦 Total: ' + total + ' items\n✅ Matched: ' + matched +
-    '\n⚠️ Mismatch: ' + mismatch + '\n🔴 Uncounted: ' + uncounted +
-    '\n📈 Progress: ' + pct + '%\n⏰ ' + new Date().toLocaleString('en-MY');
-  document.getElementById('chatInput').value = msg;
-  document.getElementById('chatOverlay').classList.add('open');
-  showToast('Summary ready! Tap ➤ to send.', 'success');
-});
-
 
 </script>
 
