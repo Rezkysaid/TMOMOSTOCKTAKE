@@ -628,10 +628,11 @@ body.dark .login-card{background:rgba(17,24,39,0.85);border-color:rgba(255,255,2
 @keyframes loginIconRing{0%{transform:scale(0.92);opacity:0.8;}70%{transform:scale(1.18);opacity:0;}100%{transform:scale(1.18);opacity:0;}}
 .login-title{font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:800;color:var(--text);margin:0 0 5px;letter-spacing:-0.3px;}
 .login-sub{font-size:13px;color:var(--muted2);margin:0 0 22px;line-height:1.4;}
-.login-input-wrap{position:relative;}
-.login-input{width:100%;background:var(--card2);border:2px solid var(--border2);color:var(--text);padding:14px 14px 14px 42px;border-radius:14px;font-family:var(--mono,monospace);font-size:19px;letter-spacing:3px;text-align:center;outline:none;box-shadow:inset 0 3px 0 rgba(0,0,0,0.12);font-weight:700;transition:border-color 0.2s,box-shadow 0.2s;}
+.login-input-wrap{position:relative;display:flex;justify-content:center;}
+.login-input{width:140px;background:var(--card2);border:2px solid var(--border2);color:var(--text);padding:9px 10px 9px 30px;border-radius:12px;font-family:var(--mono,monospace);font-size:15px;letter-spacing:2.5px;text-align:center;outline:none;box-shadow:inset 0 3px 0 rgba(0,0,0,0.12);font-weight:700;transition:border-color 0.2s,box-shadow 0.2s;}
 .login-input:focus{border-color:var(--accent);box-shadow:inset 0 3px 0 rgba(0,0,0,0.12),0 0 0 4px rgba(59,91,252,0.18);}
-.login-input-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--border2);pointer-events:none;}
+.login-input-icon{position:absolute;left:48px;top:50%;transform:translateY(-50%);color:var(--border2);pointer-events:none;}
+.login-input-icon svg{width:13px;height:13px;}
 .login-input.shake{animation:loginShake 0.4s;border-color:#e63b2e;}
 @keyframes loginShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-6px);}80%{transform:translateX(6px);}}
 .login-btn{width:100%;margin-top:16px;background:linear-gradient(135deg,#5b7bff,#2e48cc);color:#fff;border:none;padding:14px;border-radius:14px;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(59,91,252,0.4);display:flex;align-items:center;justify-content:center;gap:7px;transition:transform 0.15s,box-shadow 0.15s;}
