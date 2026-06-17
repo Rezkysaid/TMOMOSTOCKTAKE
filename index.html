@@ -636,7 +636,6 @@ body.authed #loginGate{display:none!important;}
   function grantAccess(id){
     var name = TEAM_IDS[id];
     try {
-      localStorage.setItem('tmomoAuthId', id);
       if (!localStorage.getItem('tmomoChatName')) localStorage.setItem('tmomoChatName', name);
     } catch(e) {}
     document.body.classList.add('authed');
@@ -659,14 +658,7 @@ body.authed #loginGate{display:none!important;}
   btn.addEventListener('click', tryLogin);
   input.addEventListener('keydown', function(e){ if (e.key === 'Enter') tryLogin(); });
 
-  try {
-    var savedId = localStorage.getItem('tmomoAuthId');
-    if (savedId && TEAM_IDS[savedId]) {
-      document.body.classList.add('authed');
-    } else {
-      input.focus();
-    }
-  } catch(e) {}
+  input.focus();
 })();
 </script>
 
