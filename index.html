@@ -64,18 +64,36 @@ body.dark .btn-cancel { background:#0d1228; border-color:#1e2d52; color:#7b8fc4;
 
 /* TOGGLE BUTTON */
 .btn-theme {
-  width: 36px; height: 36px;
-  background: var(--card);
-  border: 2px solid var(--border2);
-  border-radius: 12px;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.45);
+  background: radial-gradient(circle at 32% 26%, #eafdff 0%, #8fe9f7 20%, #2fd0e8 42%, #14a3d6 64%, #0c79ad 84%, #095c87 100%);
+  box-shadow: 0 6px 14px rgba(10,90,140,0.5), inset 0 3px 5px rgba(255,255,255,0.6), inset 0 -4px 7px rgba(0,30,60,0.35);
   cursor: pointer;
   font-size: 18px;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: var(--clay-shadow-sm), var(--clay-inset);
-  transition: all 0.2s;
+  transition: transform 0.15s;
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
 }
-.btn-theme:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
+.btn-theme::before {
+  content: '';
+  position: absolute;
+  top: 4px; left: 7px;
+  width: 13px; height: 7px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 50%;
+  filter: blur(1.2px);
+  transform: rotate(-25deg);
+  pointer-events: none;
+}
+.btn-theme svg { display: block; filter: drop-shadow(0 1px 2px rgba(0,40,70,0.35)); }
+.btn-theme:active { transform: scale(0.9); }
+body.dark .btn-theme {
+  background: radial-gradient(circle at 32% 26%, #f1fbff 0%, #b9e0ff 18%, #5f93ff 42%, #3a64e6 64%, #2140ad 84%, #142878 100%);
+  box-shadow: 0 6px 14px rgba(15,30,110,0.6), inset 0 3px 5px rgba(255,255,255,0.5), inset 0 -4px 7px rgba(0,10,40,0.45);
+}
 
 *{box-sizing:border-box;margin:0;padding:0;}
 html {
@@ -141,13 +159,6 @@ header{
   cursor:pointer;border-radius:10px;
   display:flex;align-items:center;gap:5px;
   letter-spacing:0.3px;
-}
-.btn-theme{
-  width:34px;height:34px;
-  background:rgba(255,255,255,0.15);
-  border:1px solid rgba(255,255,255,0.25);
-  border-radius:10px;cursor:pointer;font-size:16px;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;
 }
 
 /* STATS */
@@ -588,7 +599,7 @@ body.dark .chat-name-input { background: #0d1228; border-color: #1e2d52; color: 
     </div>
   </div>
   <div class="header-right">
-    <button class="btn-theme" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+    <button class="btn-theme" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode"><svg viewBox="0 0 24 24" width="19" height="19"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="#eafdff"/></svg></button>
     <div class="sync-pill">
       <div class="sync-dot" id="syncDot"></div>
       <span class="sync-label" id="syncLabel">—</span>
@@ -1369,6 +1380,8 @@ body.dark .chat-text-input{background:#0d1228;border-color:#1e2d52;color:#e8eeff
 
 <script>
 // Theme toggle
+var MOON_ICON_SVG = '<svg viewBox="0 0 24 24" width="19" height="19"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="#eafdff"/></svg>';
+var SUN_ICON_SVG = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fffdf2" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5" fill="#fffdf2" stroke="none"/><line x1="12" y1="1.5" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22.5" y2="12"/><line x1="4.5" y1="4.5" x2="6.2" y2="6.2"/><line x1="17.8" y1="17.8" x2="19.5" y2="19.5"/><line x1="4.5" y1="19.5" x2="6.2" y2="17.8"/><line x1="17.8" y1="6.2" x2="19.5" y2="4.5"/></svg>';
 (function() {
   try {
     var saved = localStorage.getItem('theme') || 'light';
@@ -1377,7 +1390,7 @@ body.dark .chat-text-input{background:#0d1228;border-color:#1e2d52;color:#e8eeff
       document.documentElement.classList.add('dark-html');
       document.documentElement.style.backgroundColor = '#080c1a';
       var b = document.getElementById('themeToggle');
-      if (b) b.textContent = '☀️';
+      if (b) b.innerHTML = SUN_ICON_SVG;
     }
   } catch(e) {}
 })();
@@ -1387,7 +1400,7 @@ function toggleTheme() {
   document.documentElement.classList.toggle('dark-html', isDark);
   document.documentElement.style.backgroundColor = isDark ? '#080c1a' : '#f0f4ff';
   var btn = document.getElementById('themeToggle');
-  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+  if (btn) btn.innerHTML = isDark ? SUN_ICON_SVG : MOON_ICON_SVG;
   try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch(e) {}
 }
 </script>
