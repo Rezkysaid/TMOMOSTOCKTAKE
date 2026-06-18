@@ -1611,19 +1611,53 @@ window.forwardItem = function(itemId) {
     return;
   }
 
+  // Try Malay first, then English - whichever the user actually spoke in,
+  // the other attempt's gibberish gets discarded once we get a clean digit string.
+  var LANGS = ['ms-MY', 'en-US'];
+  var DIGIT_WORDS = {
+    kosong:'0', sifar:'0', satu:'1', dua:'2', tiga:'3', empat:'4', lima:'5', enam:'6', tujuh:'7', lapan:'8', sembilan:'9',
+    zero:'0', oh:'0', one:'1', two:'2', three:'3', four:'4', five:'5', six:'6', seven:'7', eight:'8', nine:'9'
+  };
+
+  function wordsToDigits(transcript) {
+    var tokens = transcript.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().split(/\s+/);
+    if (!tokens.length) return null;
+    var out = '';
+    for (var i = 0; i < tokens.length; i++) {
+      var t = tokens[i];
+      if (/^\d+$/.test(t)) { out += t; continue; }
+      if (DIGIT_WORDS.hasOwnProperty(t)) { out += DIGIT_WORDS[t]; continue; }
+      return null; // unrecognized token - not a clean digit utterance
+    }
+    return out;
+  }
+
   var recognition = new SpeechRecognitionAPI();
-  recognition.lang = 'en-US';
   recognition.continuous = false;
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
   var listening = false;
+  var langIndex = 0;
+  var retryPending = false;
+  var finalValue = null;
+
+  function startRecognition(idx) {
+    langIndex = idx;
+    recognition.lang = LANGS[idx];
+    try { recognition.start(); } catch (err) {}
+  }
 
   recognition.onresult = function(e) {
     var transcript = e.results[0][0].transcript.trim();
-    // a spoken barcode is recognized as digit groups with spaces between them - collapse those into one number
-    var cleaned = /^[\d\s]+$/.test(transcript) ? transcript.replace(/\s+/g, '') : transcript;
-    searchInput.value = cleaned;
-    window.renderItems && window.renderItems();
+    var digits = wordsToDigits(transcript);
+    var cleaned = digits !== null ? digits : (/^[\d\s]+$/.test(transcript) ? transcript.replace(/\s+/g, '') : transcript);
+    var isCleanDigits = /^\d+$/.test(cleaned);
+
+    if (!isCleanDigits && langIndex < LANGS.length - 1) {
+      retryPending = true; // garbled - likely spoke the other language, give it one more try
+      return;
+    }
+    finalValue = cleaned;
   };
   recognition.onerror = function(e) {
     if (e.error === 'no-speech') {
@@ -1633,11 +1667,24 @@ window.forwardItem = function(itemId) {
     }
   };
   recognition.onstart = function() { listening = true; micBtn.classList.add('listening'); };
-  recognition.onend = function() { listening = false; micBtn.classList.remove('listening'); };
+  recognition.onend = function() {
+    if (retryPending) {
+      retryPending = false;
+      startRecognition(langIndex + 1);
+      return;
+    }
+    listening = false;
+    micBtn.classList.remove('listening');
+    if (finalValue !== null) {
+      searchInput.value = finalValue;
+      finalValue = null;
+      window.renderItems && window.renderItems();
+    }
+  };
 
   micBtn.addEventListener('click', function() {
     if (listening) { recognition.stop(); return; }
-    try { recognition.start(); } catch (err) {}
+    startRecognition(0);
   });
 })();
 
