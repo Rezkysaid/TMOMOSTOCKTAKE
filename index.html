@@ -328,6 +328,7 @@ header{
   color:var(--muted);margin-top:4px;font-family:var(--mono);
 }
 
+.item-note{font-size:12px;font-weight:700;color:var(--muted2);margin-top:4px;font-style:italic;}
 .panel-note{
   background:var(--accent3);border-top:1px solid var(--border);
   padding:6px 14px;font-size:11px;color:var(--muted2);font-style:italic;
@@ -965,7 +966,7 @@ function itemCardHTML(item) {
         <div class="panel-name">${item.name||'—'}</div>
         <div class="panel-barcode">${item.barcode||'No barcode'}</div>
         <div class="panel-cat-badge">${item.category}</div>
-        ${item.note?`<div style="font-size:10px;color:rgba(255,255,255,0.6);margin-top:4px;font-style:italic">✎ ${item.note}</div>`:''}
+        ${item.note?`<div class="item-note">✎ ${item.note}</div>`:''}
         ${(item.updatedAt||item.addedAt)?`<div class="item-timestamp">🕐 ${formatDate(item.updatedAt||item.addedAt)}</div>`:''}
       </div>
       <div class="panel-actions">
