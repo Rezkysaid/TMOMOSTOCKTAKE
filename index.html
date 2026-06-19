@@ -646,6 +646,65 @@ body.dark .login-card{background:rgba(17,24,39,0.9);border-color:rgba(255,255,25
 .login-btn:active{transform:translateY(0);}
 .login-error{color:#e63b2e;font-size:11px;font-weight:700;margin-top:8px;min-height:13px;}
 .login-footer{margin-top:14px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:9.5px;color:var(--muted2);font-weight:600;}
+
+/* ===== INTERACTIVITY & MOTION ===== */
+/* Smooth base transition for all interactive controls */
+.btn-add-item,.btn-export,.btn-select-cat,.btn-save,.btn-cancel,
+.cat-tab,.btn-cat-add,.btn-cat-del,.ibtn,.filter-select,
+.search-mic-btn,.stat-item,.progress-wrap{
+  transition:transform 0.18s cubic-bezier(.34,1.56,.64,1),box-shadow 0.2s ease,background 0.2s ease,border-color 0.2s ease;
+}
+
+/* Press = shrink + glow */
+.btn-add-item:active{transform:scale(0.94);box-shadow:0 4px 14px rgba(59,91,252,0.35),0 0 0 4px rgba(59,91,252,0.25),inset 0 1px 0 rgba(255,255,255,0.25);}
+.btn-save:active{transform:scale(0.96);box-shadow:0 4px 16px rgba(59,91,252,0.35),0 0 0 4px rgba(59,91,252,0.3);}
+.btn-export:active{transform:scale(0.93);box-shadow:0 0 0 3px rgba(255,255,255,0.35);}
+.btn-cancel:active{transform:scale(0.95);}
+.btn-select-cat:active{transform:scale(0.98);box-shadow:var(--shadow-sm),0 0 0 3px rgba(59,91,252,0.18);}
+.btn-cat-add:active{transform:scale(0.88) rotate(90deg);box-shadow:0 2px 8px rgba(59,91,252,0.3),0 0 0 4px rgba(59,91,252,0.25);}
+.btn-cat-del:active{transform:scale(0.88);box-shadow:0 0 0 4px rgba(239,68,68,0.2);}
+.ibtn:active{transform:scale(0.86);}
+.ibtn-fwd:active{box-shadow:0 0 0 4px rgba(59,91,252,0.2);}
+.ibtn-del:active{box-shadow:0 0 0 4px rgba(239,68,68,0.2);}
+.search-mic-btn:active{transform:translateY(-50%) scale(0.85);}
+.filter-select:active{transform:scale(0.97);}
+
+/* Hover lift for pointer devices (ignored on touch) */
+@media (hover:hover){
+  .btn-add-item:hover,.btn-save:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(59,91,252,0.45);}
+  .btn-export:hover,.btn-select-cat:hover{transform:translateY(-1px);}
+  .stat-item:hover{transform:translateY(-2px);box-shadow:var(--shadow);}
+  .cat-tab:hover{transform:translateY(-1px);}
+  .ibtn:hover{transform:translateY(-1px);}
+}
+
+/* Tappable count numbers pulse on press */
+.panel-qty-num.editable:active{transform:scale(0.9);}
+
+/* Category tab activation pop */
+.cat-tab.active{animation:tabPop 0.3s cubic-bezier(.34,1.56,.64,1);}
+@keyframes tabPop{0%{transform:scale(0.92);}60%{transform:scale(1.06);}100%{transform:scale(1);}}
+
+/* Stat numbers count-in shimmer when they change */
+@keyframes statBump{0%{transform:scale(1);}40%{transform:scale(1.18);}100%{transform:scale(1);}}
+.stat-num.bump{animation:statBump 0.4s cubic-bezier(.34,1.56,.64,1);}
+
+/* Tap ripple */
+.ripple{position:absolute;border-radius:50%;transform:scale(0);background:rgba(255,255,255,0.45);pointer-events:none;animation:rippleExpand 0.55s ease-out;z-index:1;}
+@keyframes rippleExpand{to{transform:scale(2.5);opacity:0;}}
+
+/* Item cards slide+fade in with a slight stagger feel */
+.item-card{transition:transform 0.18s ease,box-shadow 0.2s ease,border-left-color 0.2s ease;}
+@media (hover:hover){.item-card:hover{transform:translateX(2px);box-shadow:var(--shadow);}}
+.item-card:active{transform:scale(0.995);}
+
+/* Modal sheet + overlay fade */
+.modal-overlay{transition:background 0.25s ease;}
+
+/* Respect users who prefer less motion */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important;}
+}
 </style>
 </head>
 <body>
@@ -718,6 +777,30 @@ body.dark .login-card{background:rgba(17,24,39,0.9);border-color:rgba(255,255,25
   input.addEventListener('keydown', function(e){ if (e.key === 'Enter') tryLogin(); });
 
   input.focus();
+})();
+</script>
+
+<script>
+// Tap ripple + light haptic feedback on interactive controls
+(function(){
+  var RIPPLE_SEL = '.btn-add-item,.btn-export,.btn-save,.btn-cancel,.btn-select-cat,.cat-tab,.btn-cat-add,.btn-cat-del,.ibtn,.chat-fab,.login-btn,.search-mic-btn';
+  document.addEventListener('pointerdown', function(e){
+    var el = e.target.closest && e.target.closest(RIPPLE_SEL);
+    if (!el) return;
+    var cs = window.getComputedStyle(el);
+    if (cs.position === 'static') el.style.position = 'relative';
+    if (cs.overflow !== 'hidden') el.style.overflow = 'hidden';
+    var rect = el.getBoundingClientRect();
+    var size = Math.max(rect.width, rect.height);
+    var r = document.createElement('span');
+    r.className = 'ripple';
+    r.style.width = r.style.height = size + 'px';
+    r.style.left = (e.clientX - rect.left - size/2) + 'px';
+    r.style.top = (e.clientY - rect.top - size/2) + 'px';
+    el.appendChild(r);
+    setTimeout(function(){ r.remove(); }, 560);
+    if (navigator.vibrate) { try { navigator.vibrate(8); } catch(err){} }
+  }, true);
 })();
 </script>
 
@@ -1072,14 +1155,25 @@ function loadMore() {
   updateLoadMoreBtn();
 }
 
+function setStat(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (el.textContent !== String(val)) {
+    el.textContent = val;
+    el.classList.remove('bump');
+    void el.offsetWidth;
+    el.classList.add('bump');
+  }
+}
+
 window.updateStats = function() {
   const total = state.items.length;
   const mm = state.items.filter(i=>(i.physical||0)!==(i.system||0)).length;
   const counted = state.items.filter(i=>(i.physical||0)>0).length;
-  document.getElementById('statTotal').textContent = total;
-  document.getElementById('statCats').textContent = state.categories.length;
-  document.getElementById('statDiff').textContent = mm;
-  document.getElementById('statMatch').textContent = total-mm;
+  setStat('statTotal', total);
+  setStat('statCats', state.categories.length);
+  setStat('statDiff', mm);
+  setStat('statMatch', total-mm);
 
   // Update progress circle
   const pct = total > 0 ? Math.round((counted/total)*100) : 0;
