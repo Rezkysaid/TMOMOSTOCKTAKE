@@ -383,36 +383,20 @@ header{
   bottom: 24px;
   right: 20px;
   width: 56px; height: 56px;
-  border: 1px solid rgba(255,255,255,0.45);
+  border: none;
   border-radius: 50%;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   font-size: 22px;
-  background: radial-gradient(circle at 32% 26%, #fffaf0 0%, #ffeed9 28%, #ffdcb3 52%, #f6c08a 76%, #e8a868 100%);
-  box-shadow: 0 8px 18px rgba(220,150,90,0.4), inset 0 3px 6px rgba(255,255,255,0.75), inset 0 -5px 9px rgba(150,90,40,0.25);
+  background: var(--accent);
+  box-shadow: 0 6px 16px rgba(59,91,252,0.4);
   z-index: 150;
-  transition: transform 0.2s;
-  position: fixed;
+  transition: transform 0.2s, box-shadow 0.2s;
   overflow: hidden;
-}
-.chat-fab::before {
-  content: '';
-  position: absolute;
-  top: 6px; left: 11px;
-  width: 18px; height: 9px;
-  background: rgba(255,255,255,0.9);
-  border-radius: 50%;
-  filter: blur(2px);
-  transform: rotate(-25deg);
-  pointer-events: none;
 }
 .chat-fab:active { transform: scale(0.92); }
 .chat-fab-icon { display: flex; align-items: center; justify-content: center; }
-.chat-fab-icon svg { display: block; filter: drop-shadow(0 1px 2px rgba(150,90,40,0.3)); }
-body.dark .chat-fab {
-  background: radial-gradient(circle at 32% 26%, #fff3e3 0%, #f3d6b4 28%, #d9a96e 52%, #b9824a 76%, #8c5f30 100%);
-  box-shadow: 0 8px 18px rgba(60,35,10,0.55), inset 0 3px 6px rgba(255,255,255,0.5), inset 0 -5px 9px rgba(40,20,5,0.4);
-}
+.chat-fab-icon svg { display: block; }
 .chat-badge {
   position: absolute; top: -2px; right: -2px;
   background: var(--red); color: #fff;
@@ -1588,11 +1572,10 @@ body.dark .chat-text-input{background:#0d1228;border-color:#1e2d52;color:#e8eeff
 .voice-wave{flex:1;height:18px;background:repeating-linear-gradient(90deg,currentColor 0,currentColor 2px,transparent 2px,transparent 5px);opacity:0.45;border-radius:2px;}
 .voice-duration{font-family:monospace;font-size:11px;flex-shrink:0;opacity:0.85;}
 .chat-text-input{white-space:pre-wrap;}
-.ptt-fab{position:fixed;bottom:94px;right:22px;width:48px;height:48px;border-radius:50%;border:1px solid rgba(255,255,255,0.45);cursor:pointer;z-index:150;display:flex;align-items:center;justify-content:center;font-size:19px;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overflow:hidden;background:radial-gradient(circle at 32% 26%,#eafff4 0%,#9af0c4 22%,#3ed98f 48%,#1fae6c 72%,#13794b 100%);box-shadow:0 6px 14px rgba(20,140,90,0.45),inset 0 3px 5px rgba(255,255,255,0.65),inset 0 -4px 7px rgba(0,60,30,0.3);transition:transform 0.15s;}
-.ptt-fab::before{content:'';position:absolute;top:4px;left:8px;width:14px;height:7px;background:rgba(255,255,255,0.9);border-radius:50%;filter:blur(1.3px);transform:rotate(-25deg);pointer-events:none;}
-.ptt-fab.active,body.dark .ptt-fab.active{background:radial-gradient(circle at 32% 26%,#fff0ee 0%,#ffb3a8 22%,#ff6b58 48%,#e63b2e 72%,#a3261c 100%);box-shadow:0 6px 18px rgba(230,60,40,0.55),inset 0 3px 5px rgba(255,255,255,0.5),inset 0 -4px 7px rgba(80,10,5,0.35);animation:pttPulse 1s ease-in-out infinite;}
+.ptt-fab{position:fixed;bottom:94px;right:22px;width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;z-index:150;display:flex;align-items:center;justify-content:center;font-size:19px;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overflow:hidden;background:var(--green);box-shadow:0 6px 14px rgba(16,185,129,0.4);transition:transform 0.15s,box-shadow 0.2s;}
+.ptt-fab.active,body.dark .ptt-fab.active{background:var(--red);box-shadow:0 6px 16px rgba(239,68,68,0.5);animation:pttPulse 1s ease-in-out infinite;}
 @keyframes pttPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
-body.dark .ptt-fab{background:radial-gradient(circle at 32% 26%,#eafff4 0%,#7fe0ad 22%,#2fb87a 48%,#178c57 72%,#0c5c38 100%);box-shadow:0 6px 14px rgba(10,80,50,0.55),inset 0 3px 5px rgba(255,255,255,0.45),inset 0 -4px 7px rgba(0,30,15,0.4);}
+body.dark .ptt-fab{background:var(--green);box-shadow:0 6px 14px rgba(52,211,153,0.35);}
 .ptt-hint{position:fixed;bottom:108px;right:78px;background:rgba(15,21,53,0.85);color:#fff;font-size:11px;font-weight:700;font-family:var(--sans,sans-serif);padding:5px 11px;border-radius:12px;white-space:nowrap;z-index:149;pointer-events:none;box-shadow:0 4px 10px rgba(0,0,0,0.25);}
 body.dark .ptt-hint{background:rgba(255,255,255,0.18);}
 .ptt-banner{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-12px);background:rgba(15,21,53,0.92);color:#fff;font-family:var(--sans,sans-serif);font-size:12.5px;font-weight:700;padding:8px 16px;border-radius:20px;display:flex;align-items:center;gap:8px;z-index:400;opacity:0;pointer-events:none;transition:opacity 0.2s,transform 0.2s;box-shadow:0 6px 16px rgba(0,0,0,0.3);}
@@ -1602,40 +1585,23 @@ body.dark .ptt-hint{background:rgba(255,255,255,0.18);}
 
 <div class="ptt-banner" id="pttBanner"><span class="dot"></span><span id="pttBannerText"></span></div>
 <div class="ptt-hint" id="pttHint">Hold to speak</div>
-<button class="ptt-fab" id="pttFab" title="Hold to talk live"><svg viewBox="0 0 24 24" width="24" height="24">
-  <defs>
-    <linearGradient id="pttBodyGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#dff5ea"/>
-    </linearGradient>
-  </defs>
-  <path d="M15.6 7.6c-.4-1.6-.2-3.2.9-4.7" fill="none" stroke="#eafff4" stroke-width="1.2" stroke-linecap="round" opacity="0.85"/>
-  <path d="M17.6 8.4c.1-2.3.7-4 2.1-5.6" fill="none" stroke="#eafff4" stroke-width="1.2" stroke-linecap="round" opacity="0.55"/>
-  <line x1="15.3" y1="7.4" x2="17.2" y2="2.5" stroke="#eafff4" stroke-width="1.4" stroke-linecap="round"/>
-  <circle cx="17.3" cy="2.3" r="1" fill="#eafff4"/>
-  <rect x="6.6" y="7" width="10.2" height="14.6" rx="2.6" fill="url(#pttBodyGrad)" stroke="#bfe9d4" stroke-width="0.5"/>
-  <rect x="5.3" y="10.2" width="1.5" height="3.4" rx="0.7" fill="#eafff4"/>
-  <rect x="8.3" y="8.9" width="6.6" height="3.6" rx="1" fill="#15915a"/>
-  <circle cx="9.5" cy="10.7" r="0.45" fill="#7be8c2"/>
-  <circle cx="11.6" cy="10.7" r="0.45" fill="#7be8c2"/>
-  <circle cx="13.7" cy="10.7" r="0.45" fill="#7be8c2"/>
-  <circle cx="9.7" cy="15.5" r="0.6" fill="#1fae6c"/>
-  <circle cx="11.8" cy="15.5" r="0.6" fill="#1fae6c"/>
-  <circle cx="13.9" cy="15.5" r="0.6" fill="#1fae6c"/>
-  <rect x="8.5" y="17.6" width="6.4" height="2.3" rx="1.1" fill="#1fae6c" opacity="0.65"/>
+<button class="ptt-fab" id="pttFab" title="Hold to talk live"><svg viewBox="0 0 24 24" width="23" height="23">
+  <line x1="15.3" y1="7.4" x2="17.2" y2="2.8" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+  <circle cx="17.4" cy="2.6" r="1" fill="#fff"/>
+  <rect x="6.6" y="7" width="10.2" height="14.6" rx="2.6" fill="#fff"/>
+  <rect x="5.3" y="10.2" width="1.5" height="3.4" rx="0.7" fill="#fff"/>
+  <rect x="8.3" y="8.9" width="6.6" height="3.6" rx="1" fill="#10b981"/>
+  <circle cx="9.7" cy="15.5" r="0.7" fill="#10b981"/>
+  <circle cx="11.8" cy="15.5" r="0.7" fill="#10b981"/>
+  <circle cx="13.9" cy="15.5" r="0.7" fill="#10b981"/>
+  <rect x="8.5" y="17.7" width="6.4" height="2.2" rx="1.1" fill="#10b981" opacity="0.55"/>
 </svg></button>
 
-<button class="chat-fab" id="chatFab"><span class="chat-fab-icon"><svg viewBox="0 0 24 24" width="27" height="27">
-  <defs>
-    <linearGradient id="fabBubbleGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#fffaf0"/>
-      <stop offset="100%" stop-color="#ffe7cd"/>
-    </linearGradient>
-  </defs>
-  <path d="M12 2C6.48 2 2 5.94 2 10.5c0 2.42 1.25 4.6 3.26 6.1L4 21l4.62-1.74C9.95 19.74 10.96 19.9 12 19.9c5.52 0 10-3.94 10-8.5S17.52 2 12 2z" fill="url(#fabBubbleGrad)" stroke="#f0c79e" stroke-width="0.5"/>
-  <circle cx="8" cy="10.5" r="1.15" fill="#d99a55"/>
-  <circle cx="12" cy="10.5" r="1.15" fill="#d99a55"/>
-  <circle cx="16" cy="10.5" r="1.15" fill="#d99a55"/>
+<button class="chat-fab" id="chatFab"><span class="chat-fab-icon"><svg viewBox="0 0 24 24" width="26" height="26">
+  <path d="M12 2C6.48 2 2 5.94 2 10.5c0 2.42 1.25 4.6 3.26 6.1L4 21l4.62-1.74C9.95 19.74 10.96 19.9 12 19.9c5.52 0 10-3.94 10-8.5S17.52 2 12 2z" fill="#fff"/>
+  <circle cx="8" cy="10.5" r="1.15" fill="#3b5bfc"/>
+  <circle cx="12" cy="10.5" r="1.15" fill="#3b5bfc"/>
+  <circle cx="16" cy="10.5" r="1.15" fill="#3b5bfc"/>
 </svg></span><span class="chat-badge" id="chatBadge"></span></button>
 
 <div class="chat-overlay" id="chatOverlay">
