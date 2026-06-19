@@ -155,6 +155,16 @@ header{
   letter-spacing:0.3px;
 }
 
+/* WELCOME BANNER */
+.welcome-banner{
+  max-height:0;overflow:hidden;opacity:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;font-family:var(--sans);font-weight:700;font-size:13px;
+  text-align:center;padding:0 16px;
+  transition:max-height 0.4s ease,opacity 0.4s ease,padding 0.4s ease;
+}
+.welcome-banner.show{max-height:44px;opacity:1;padding:10px 16px;}
+
 /* STATS */
 .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:transparent;padding:12px 12px 0;}
 .stat-item{
@@ -679,6 +689,13 @@ body.dark .login-card{background:rgba(17,24,39,0.9);border-color:rgba(255,255,25
     document.getElementById('userAvatar').textContent = name.charAt(0);
     pill.style.display = 'flex';
     document.body.classList.add('authed');
+
+    var banner = document.getElementById('welcomeBanner');
+    if (banner) {
+      banner.textContent = '👋 Welcome back, ' + name + '!';
+      requestAnimationFrame(function(){ banner.classList.add('show'); });
+      setTimeout(function(){ banner.classList.remove('show'); }, 5000);
+    }
   }
 
   function tryLogin(){
@@ -730,6 +747,8 @@ body.dark .login-card{background:rgba(17,24,39,0.9);border-color:rgba(255,255,25
     <button class="btn-export" onclick="exportData()">↓ CSV</button>
   </div>
 </header>
+
+<div class="welcome-banner" id="welcomeBanner"></div>
 
 <div class="stats-bar">
   <div class="stat-item"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Items</div></div>
