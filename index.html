@@ -165,6 +165,14 @@ header{
 }
 .welcome-banner.show{max-height:44px;opacity:1;padding:10px 16px;}
 
+/* ACTIVITY NOTIFICATIONS */
+.activity-toast-stack{position:fixed;top:10px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:380px;z-index:600;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.activity-toast{background:var(--card);border:1.5px solid var(--border2);border-left:4px solid var(--accent);border-radius:14px;padding:10px 14px;box-shadow:var(--shadow);font-family:var(--sans);display:flex;align-items:center;gap:10px;transform:translateY(-24px);opacity:0;transition:transform 0.3s cubic-bezier(.34,1.56,.64,1),opacity 0.3s ease;pointer-events:auto;}
+.activity-toast.show{transform:translateY(0);opacity:1;}
+.activity-toast-avatar{width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;}
+.activity-toast-text{font-size:12.5px;color:var(--text);line-height:1.4;}
+.activity-toast-text b{font-weight:800;}
+
 /* STATS */
 .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:transparent;padding:12px 12px 0;}
 .stat-item{
@@ -820,6 +828,7 @@ button:focus-visible,.cat-tab:focus-visible,select:focus-visible,a:focus-visible
 </header>
 
 <div class="welcome-banner" id="welcomeBanner"></div>
+<div class="activity-toast-stack" id="activityToastStack"></div>
 
 <div class="stats-bar">
   <div class="stat-item"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Items</div></div>
@@ -942,6 +951,25 @@ function setSyncStatus(s) {
 
 let _isFirstLoad = true;
 
+function getMyName() {
+  try { return localStorage.getItem('tmomoChatName') || ''; } catch(e) { return ''; }
+}
+
+window.showActivityToast = function(name, msgHtml) {
+  const stack = document.getElementById('activityToastStack');
+  if (!stack || !name) return;
+  const el = document.createElement('div');
+  el.className = 'activity-toast';
+  el.innerHTML = `<span class="activity-toast-avatar">${name.charAt(0)}</span><span class="activity-toast-text"><b>${name}</b> ${msgHtml}</span>`;
+  stack.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 300);
+  }, 4500);
+  while (stack.children.length > 3) stack.removeChild(stack.firstChild);
+}
+
 onValue(ref(db,'stocktaking'), snap => {
   const data = snap.val() || {};
   const newCategories = data.categories ? Object.values(data.categories) : [];
@@ -954,6 +982,30 @@ onValue(ref(db,'stocktaking'), snap => {
   const scrollY = window.scrollY || window.pageYOffset;
   const catsChanged = JSON.stringify(newCategories) !== JSON.stringify(state.categories);
   const itemCountChanged = newItems.length !== state.items.length;
+
+  if (!_isFirstLoad) {
+    const myName = getMyName();
+    const oldItemsById = {};
+    state.items.forEach(i => { oldItemsById[i.id] = i; });
+
+    newItems.forEach(item => {
+      if (!item.lastEditBy || item.lastEditBy === myName) return;
+      const old = oldItemsById[item.id];
+      if (!old) {
+        showActivityToast(item.lastEditBy, `added <b>${item.name||'item'}</b>`);
+        return;
+      }
+      const physChanged = (old.physical||0) !== (item.physical||0);
+      const sysChanged = (old.system||0) !== (item.system||0);
+      if (physChanged || sysChanged) {
+        let qtyMsg;
+        if (physChanged && sysChanged) qtyMsg = `Physical: ${item.physical||0}, System: ${item.system||0}`;
+        else if (physChanged) qtyMsg = `Physical: ${item.physical||0}`;
+        else qtyMsg = `System: ${item.system||0}`;
+        showActivityToast(item.lastEditBy, `updated <b>${item.name||'item'}</b> → ${qtyMsg}`);
+      }
+    });
+  }
 
   state.categories = newCategories;
   state.items = newItems;
@@ -1296,11 +1348,12 @@ window.saveItem = async function() {
   setSyncStatus('syncing');
   try {
     const now = new Date().toISOString();
+    const lastEditBy = getMyName();
     if (editingId) {
-      await update(ref(db,`stocktaking/items/${editingId}`),{barcode,name,category,physical,system,note,updatedAt:now});
+      await update(ref(db,`stocktaking/items/${editingId}`),{barcode,name,category,physical,system,note,updatedAt:now,lastEditBy});
       showToast('Updated!','success');
     } else {
-      await push(ref(db,'stocktaking/items'),{barcode,name,category,physical,system,note,addedAt:now,updatedAt:now});
+      await push(ref(db,'stocktaking/items'),{barcode,name,category,physical,system,note,addedAt:now,updatedAt:now,lastEditBy});
       showToast('Added!','success');
     }
 
@@ -1317,7 +1370,7 @@ window.deleteItem = async function(id) {
 window._savePhysical = async function(id, physical, cb) {
   setSyncStatus('syncing');
   try {
-    await update(ref(db,`stocktaking/items/${id}`),{physical});
+    await update(ref(db,`stocktaking/items/${id}`),{physical,updatedAt:new Date().toISOString(),lastEditBy:getMyName()});
     setSyncStatus('synced');
     if (cb) cb();
   } catch(e) { setSyncStatus('error'); showToast('Failed!','error'); }
@@ -1326,7 +1379,7 @@ window._savePhysical = async function(id, physical, cb) {
 window._saveSystem = async function(id, system, cb) {
   setSyncStatus('syncing');
   try {
-    await update(ref(db,`stocktaking/items/${id}`),{system});
+    await update(ref(db,`stocktaking/items/${id}`),{system,updatedAt:new Date().toISOString(),lastEditBy:getMyName()});
     setSyncStatus('synced');
     if (cb) cb();
   } catch(e) { setSyncStatus('error'); showToast('Failed!','error'); }
