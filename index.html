@@ -605,35 +605,43 @@ body.dark .chat-name-input { background: #0d1228; border-color: #1e2d52; color: 
 body:not(.authed)>*:not(#loginGate){display:none!important;}
 body.authed #loginGate{display:none!important;}
 .login-gate{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(160deg,#0c1230 0%,#1a2566 55%,#2a3ec0 100%);overflow:hidden;}
-.login-orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:0.4;animation:loginOrbDrift 20s ease-in-out infinite;}
+.login-orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:0.45;animation:loginOrbDrift 20s ease-in-out infinite;}
 .login-orb.o1{width:320px;height:320px;background:#5b7bff;top:-100px;left:-80px;}
 .login-orb.o2{width:260px;height:260px;background:#3bdfd0;bottom:-90px;right:-60px;animation-duration:24s;animation-delay:-6s;}
+.login-orb.o3{width:220px;height:220px;background:#f59e0b;top:38%;left:50%;opacity:0.18;animation-duration:28s;animation-delay:-12s;}
 @keyframes loginOrbDrift{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(18px,-20px) scale(1.08);}}
-.login-card{position:relative;width:100%;max-width:280px;background:rgba(255,255,255,0.95);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.6);border-radius:22px;padding:26px 22px 22px;box-shadow:0 20px 50px rgba(5,10,40,0.4);text-align:center;animation:loginCardIn 0.5s cubic-bezier(.2,.8,.2,1);}
-body.dark .login-card{background:rgba(17,24,39,0.9);border-color:rgba(255,255,255,0.08);}
+.login-card{position:relative;width:100%;max-width:280px;background:rgba(255,255,255,0.97);border:1px solid rgba(255,255,255,0.6);border-radius:24px;padding:28px 22px 24px;box-shadow:0 25px 60px rgba(5,10,40,0.45),inset 0 1px 0 rgba(255,255,255,0.7);text-align:center;animation:loginCardIn 0.5s cubic-bezier(.2,.8,.2,1);}
+.login-card::before{content:'';position:absolute;inset:-6px;border-radius:28px;background:linear-gradient(135deg,var(--accent),#3bdfd0,var(--gold));z-index:-1;opacity:0.32;filter:blur(11px);animation:loginGlowBreathe 4s ease-in-out infinite;}
+@keyframes loginGlowBreathe{0%,100%{opacity:0.2;}50%{opacity:0.4;}}
+body.dark .login-card{background:rgba(12,17,32,0.98);border-color:rgba(255,255,255,0.1);}
 @keyframes loginCardIn{0%{opacity:0;transform:translateY(18px) scale(0.96);}100%{opacity:1;transform:translateY(0) scale(1);}}
 .login-brand{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:22px;}
 .login-brand-mark{width:21px;height:21px;border-radius:7px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;letter-spacing:-0.5px;}
-.login-brand-name{font-family:'Space Grotesk',sans-serif;font-size:10.5px;font-weight:800;color:var(--muted2);letter-spacing:0.5px;text-transform:uppercase;}
-.login-icon{width:46px;height:46px;margin:0 auto 12px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;position:relative;transition:background 0.4s;}
-.login-icon svg{width:20px;height:20px;}
+.login-brand-name{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.6px;text-transform:uppercase;background:linear-gradient(90deg,var(--accent),#3bdfd0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.login-icon{width:50px;height:50px;margin:0 auto 12px;border-radius:50%;background:linear-gradient(145deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;position:relative;transition:background 0.4s;box-shadow:0 8px 22px rgba(59,91,252,0.5);}
+.login-icon::before{content:'';position:absolute;inset:-13px;border-radius:50%;background:radial-gradient(circle,rgba(91,123,255,0.4),transparent 70%);animation:loginGlowPulse 2.6s ease-in-out infinite;z-index:-1;}
+.login-icon svg{width:21px;height:21px;}
+@keyframes loginGlowPulse{0%,100%{opacity:0.55;transform:scale(0.94);}50%{opacity:1;transform:scale(1.12);}}
 .login-icon::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:1.5px solid rgba(91,123,255,0.35);animation:loginIconRing 2.4s ease-in-out infinite;}
 @keyframes loginIconRing{0%{transform:scale(0.92);opacity:0.8;}70%{transform:scale(1.18);opacity:0;}100%{transform:scale(1.18);opacity:0;}}
-.login-icon.unlocked{background:var(--green);animation:loginIconPop 0.5s cubic-bezier(.34,1.56,.64,1);}
+.login-icon.unlocked{background:linear-gradient(145deg,var(--green),#34d399);animation:loginIconPop 0.5s cubic-bezier(.34,1.56,.64,1);}
+.login-icon.unlocked::before{background:radial-gradient(circle,rgba(16,185,129,0.45),transparent 70%);}
 .login-icon.unlocked::after{border-color:rgba(16,185,129,0.45);}
 @keyframes loginIconPop{0%{transform:scale(1);}40%{transform:scale(1.18);}100%{transform:scale(1);}}
 #lockShackle{transition:transform 0.45s cubic-bezier(.34,1.56,.64,1);transform-origin:8.5px 10.5px;}
 .login-icon.unlocked #lockShackle{transform:rotate(-38deg) translate(-1.5px,-1px);}
 .login-input-wrap{position:relative;display:inline-block;}
-.login-input{width:190px;background:var(--card2);border:2px solid var(--border2);color:var(--text);padding:10px 12px 10px 34px;border-radius:12px;font-family:var(--mono,monospace);font-size:15px;letter-spacing:2.5px;text-align:center;outline:none;box-shadow:inset 0 3px 0 rgba(0,0,0,0.12);font-weight:400;transition:border-color 0.2s,box-shadow 0.2s;}
+.login-input{width:190px;background:var(--card2);border:2px solid var(--border2);color:var(--text);padding:10px 12px 10px 34px;border-radius:12px;font-family:var(--mono,monospace);font-size:15px;letter-spacing:2.5px;text-align:center;outline:none;box-shadow:inset 0 3px 0 rgba(0,0,0,0.1);font-weight:400;transition:border-color 0.2s,box-shadow 0.2s;}
 .login-input::placeholder{font-weight:400;opacity:0.45;}
-.login-input:focus{border-color:var(--accent);box-shadow:inset 0 3px 0 rgba(0,0,0,0.12),0 0 0 4px rgba(59,91,252,0.18);}
+.login-input:focus{border-color:var(--accent);box-shadow:inset 0 3px 0 rgba(0,0,0,0.1),0 0 0 4px rgba(59,91,252,0.22);}
 .login-input-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--border2);pointer-events:none;}
 .login-input-icon svg{width:13px;height:13px;}
 .login-input.shake{animation:loginShake 0.4s;border-color:#e63b2e;}
 @keyframes loginShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-6px);}80%{transform:translateX(6px);}}
-.login-btn{width:140px;margin:14px auto 0;background:var(--accent);color:#fff;border:none;padding:11px;border-radius:12px;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(59,91,252,0.35);display:flex;align-items:center;justify-content:center;gap:6px;transition:transform 0.15s,box-shadow 0.15s;}
-.login-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(59,91,252,0.5);}
+.login-btn{position:relative;width:140px;margin:14px auto 0;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;padding:11px;border-radius:12px;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(59,91,252,0.4);display:flex;align-items:center;justify-content:center;gap:6px;transition:transform 0.15s,box-shadow 0.15s;overflow:hidden;}
+.login-btn::before{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(115deg,transparent,rgba(255,255,255,0.45),transparent);animation:loginBtnShine 3s ease-in-out infinite;}
+@keyframes loginBtnShine{0%{left:-60%;}100%{left:130%;}}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(59,91,252,0.55);}
 .login-btn:active{transform:translateY(0);}
 .login-error{color:#e63b2e;font-size:11px;font-weight:700;margin-top:8px;min-height:13px;}
 
@@ -705,6 +713,7 @@ button:focus-visible,.cat-tab:focus-visible,select:focus-visible,a:focus-visible
 <div class="login-gate" id="loginGate">
   <div class="login-orb o1"></div>
   <div class="login-orb o2"></div>
+  <div class="login-orb o3"></div>
   <div class="login-card">
     <div class="login-icon" id="loginIcon"><svg viewBox="0 0 24 24" width="28" height="28">
       <path id="lockShackle" d="M8.5 11V7.5a3.5 3.5 0 017 0V11" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
