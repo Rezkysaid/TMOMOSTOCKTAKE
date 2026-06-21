@@ -631,12 +631,11 @@ body.authed #loginGate{display:none!important;}
 @keyframes loginGlowBreathe{0%,100%{opacity:0.2;}50%{opacity:0.4;}}
 body.dark .login-card{background:rgba(12,17,32,0.98);border-color:rgba(255,255,255,0.1);}
 @keyframes loginCardIn{0%{opacity:0;transform:translateY(18px) scale(0.96);}100%{opacity:1;transform:translateY(0) scale(1);}}
-.login-brand{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:22px;}
-.login-brand-mark{width:21px;height:21px;border-radius:7px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;letter-spacing:-0.5px;}
-.login-brand-name{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:800;letter-spacing:0.6px;text-transform:uppercase;background:linear-gradient(90deg,var(--accent),#3bdfd0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.login-icon{width:50px;height:50px;margin:0 auto 12px;border-radius:50%;background:linear-gradient(145deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;position:relative;transition:background 0.4s;box-shadow:0 8px 22px rgba(59,91,252,0.5);}
+.login-brand{display:flex;align-items:center;justify-content:center;margin-bottom:22px;}
+.login-brand-name{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:800;letter-spacing:0.4px;text-transform:uppercase;background:linear-gradient(90deg,var(--accent),#3bdfd0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.login-icon{width:54px;height:54px;margin:0 auto 14px;border-radius:50%;background:linear-gradient(145deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;position:relative;transition:background 0.4s;box-shadow:0 8px 22px rgba(59,91,252,0.5),inset 0 -4px 8px rgba(0,0,0,0.12),inset 0 3px 4px rgba(255,255,255,0.35);}
 .login-icon::before{content:'';position:absolute;inset:-13px;border-radius:50%;background:radial-gradient(circle,rgba(91,123,255,0.4),transparent 70%);animation:loginGlowPulse 2.6s ease-in-out infinite;z-index:-1;}
-.login-icon svg{width:21px;height:21px;}
+.login-icon svg{width:24px;height:24px;}
 @keyframes loginGlowPulse{0%,100%{opacity:0.55;transform:scale(0.94);}50%{opacity:1;transform:scale(1.12);}}
 .login-icon::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:1.5px solid rgba(91,123,255,0.35);animation:loginIconRing 2.4s ease-in-out infinite;}
 @keyframes loginIconRing{0%{transform:scale(0.92);opacity:0.8;}70%{transform:scale(1.18);opacity:0;}100%{transform:scale(1.18);opacity:0;}}
@@ -648,7 +647,7 @@ body.dark .login-card{background:rgba(12,17,32,0.98);border-color:rgba(255,255,2
 .login-icon.unlocked #lockShackle{transform:rotate(-38deg) translate(-1.5px,-1px);}
 .login-input-wrap{position:relative;display:inline-block;}
 .login-input{width:190px;background:var(--card2);border:2px solid var(--border2);color:var(--text);padding:10px 12px 10px 34px;border-radius:12px;font-family:var(--mono,monospace);font-size:15px;letter-spacing:2.5px;text-align:center;outline:none;box-shadow:inset 0 3px 0 rgba(0,0,0,0.1);font-weight:400;transition:border-color 0.2s,box-shadow 0.2s;}
-.login-input::placeholder{font-weight:400;opacity:0.45;}
+.login-input::placeholder{font-family:var(--sans);font-size:13px;font-weight:500;letter-spacing:0.2px;text-transform:none;opacity:0.4;}
 .login-input:focus{border-color:var(--accent);box-shadow:inset 0 3px 0 rgba(0,0,0,0.1),0 0 0 4px rgba(59,91,252,0.22);}
 .login-input-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--border2);pointer-events:none;}
 .login-input-icon svg{width:13px;height:13px;}
@@ -738,12 +737,18 @@ button:focus-visible,.cat-tab:focus-visible,select:focus-visible,a:focus-visible
   </div>
   <div class="login-card">
     <div class="login-icon" id="loginIcon"><svg viewBox="0 0 24 24" width="28" height="28">
-      <path id="lockShackle" d="M8.5 11V7.5a3.5 3.5 0 017 0V11" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
-      <rect x="6" y="11" width="12" height="9" rx="2" fill="#fff"/>
-      <path d="M12 14a1.5 1.5 0 00-1.5 1.5c0 .65.39 1.2.94 1.45L11 18.5h2l-.44-1.55a1.5 1.5 0 00.94-1.45A1.5 1.5 0 0012 14z" fill="#3b5bfc"/>
+      <defs>
+        <linearGradient id="lockBodyGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#fff"/>
+          <stop offset="100%" stop-color="#e8ecff"/>
+        </linearGradient>
+      </defs>
+      <path id="lockShackle" d="M8.5 11V7.5a3.5 3.5 0 017 0V11" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round"/>
+      <rect x="5.7" y="11" width="12.6" height="9.2" rx="2.6" fill="url(#lockBodyGrad)"/>
+      <circle cx="12" cy="15" r="1.7" fill="#3b5bfc"/>
+      <path d="M12 16.2v1.6" stroke="#3b5bfc" stroke-width="1.5" stroke-linecap="round"/>
     </svg></div>
     <div class="login-brand">
-      <div class="login-brand-mark">S</div>
       <div class="login-brand-name">StockTake Pro</div>
     </div>
     <div class="login-input-wrap">
