@@ -612,10 +612,10 @@ body.authed #loginGate{display:none!important;}
 .login-card{position:relative;width:100%;max-width:280px;background:rgba(255,255,255,0.95);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.6);border-radius:22px;padding:26px 22px 22px;box-shadow:0 20px 50px rgba(5,10,40,0.4);text-align:center;animation:loginCardIn 0.5s cubic-bezier(.2,.8,.2,1);}
 body.dark .login-card{background:rgba(17,24,39,0.9);border-color:rgba(255,255,255,0.08);}
 @keyframes loginCardIn{0%{opacity:0;transform:translateY(18px) scale(0.96);}100%{opacity:1;transform:translateY(0) scale(1);}}
-.login-brand{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:16px;}
+.login-brand{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:22px;}
 .login-brand-mark{width:21px;height:21px;border-radius:7px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;letter-spacing:-0.5px;}
 .login-brand-name{font-family:'Space Grotesk',sans-serif;font-size:10.5px;font-weight:800;color:var(--muted2);letter-spacing:0.5px;text-transform:uppercase;}
-.login-icon{width:46px;height:46px;margin:0 auto 14px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;position:relative;transition:background 0.4s;}
+.login-icon{width:46px;height:46px;margin:0 auto 12px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;position:relative;transition:background 0.4s;}
 .login-icon svg{width:20px;height:20px;}
 .login-icon::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:1.5px solid rgba(91,123,255,0.35);animation:loginIconRing 2.4s ease-in-out infinite;}
 @keyframes loginIconRing{0%{transform:scale(0.92);opacity:0.8;}70%{transform:scale(1.18);opacity:0;}100%{transform:scale(1.18);opacity:0;}}
@@ -624,8 +624,6 @@ body.dark .login-card{background:rgba(17,24,39,0.9);border-color:rgba(255,255,25
 @keyframes loginIconPop{0%{transform:scale(1);}40%{transform:scale(1.18);}100%{transform:scale(1);}}
 #lockShackle{transition:transform 0.45s cubic-bezier(.34,1.56,.64,1);transform-origin:8.5px 10.5px;}
 .login-icon.unlocked #lockShackle{transform:rotate(-38deg) translate(-1.5px,-1px);}
-.login-title{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:800;color:var(--text);margin:0 0 4px;letter-spacing:-0.3px;}
-.login-sub{font-size:11.5px;color:var(--muted2);margin:0 0 16px;line-height:1.4;}
 .login-input-wrap{position:relative;display:inline-block;}
 .login-input{width:190px;background:var(--card2);border:2px solid var(--border2);color:var(--text);padding:10px 12px 10px 34px;border-radius:12px;font-family:var(--mono,monospace);font-size:15px;letter-spacing:2.5px;text-align:center;outline:none;box-shadow:inset 0 3px 0 rgba(0,0,0,0.12);font-weight:400;transition:border-color 0.2s,box-shadow 0.2s;}
 .login-input::placeholder{font-weight:400;opacity:0.45;}
@@ -638,7 +636,6 @@ body.dark .login-card{background:rgba(17,24,39,0.9);border-color:rgba(255,255,25
 .login-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(59,91,252,0.5);}
 .login-btn:active{transform:translateY(0);}
 .login-error{color:#e63b2e;font-size:11px;font-weight:700;margin-top:8px;min-height:13px;}
-.login-footer{margin-top:14px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:9.5px;color:var(--muted2);font-weight:600;}
 
 /* ===== INTERACTIVITY & MOTION ===== */
 /* Smooth base transition for all interactive controls */
@@ -709,24 +706,21 @@ button:focus-visible,.cat-tab:focus-visible,select:focus-visible,a:focus-visible
   <div class="login-orb o1"></div>
   <div class="login-orb o2"></div>
   <div class="login-card">
-    <div class="login-brand">
-      <div class="login-brand-mark">S</div>
-      <div class="login-brand-name">StockTake Pro</div>
-    </div>
     <div class="login-icon" id="loginIcon"><svg viewBox="0 0 24 24" width="28" height="28">
       <path id="lockShackle" d="M8.5 11V7.5a3.5 3.5 0 017 0V11" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
       <rect x="6" y="11" width="12" height="9" rx="2" fill="#fff"/>
       <path d="M12 14a1.5 1.5 0 00-1.5 1.5c0 .65.39 1.2.94 1.45L11 18.5h2l-.44-1.55a1.5 1.5 0 00.94-1.45A1.5 1.5 0 0012 14z" fill="#3b5bfc"/>
     </svg></div>
-    <h2 class="login-title">Welcome Back</h2>
-    <p class="login-sub">Enter your team ID to continue</p>
+    <div class="login-brand">
+      <div class="login-brand-mark">S</div>
+      <div class="login-brand-name">StockTake Pro</div>
+    </div>
     <div class="login-input-wrap">
       <span class="login-input-icon"><svg viewBox="0 0 24 24" width="17" height="17"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z" fill="currentColor"/></svg></span>
-      <input class="login-input" id="loginIdInput" type="tel" inputmode="numeric" maxlength="4">
+      <input class="login-input" id="loginIdInput" type="tel" inputmode="numeric" maxlength="4" placeholder="Team ID">
     </div>
     <button class="login-btn" id="loginBtn"><span>Enter</span><svg viewBox="0 0 24 24" width="15" height="15"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="login-error" id="loginError"></div>
-    <div class="login-footer"><svg viewBox="0 0 24 24" width="11" height="11"><path d="M12 2a5 5 0 015 5v3h1a1 1 0 011 1v9a1 1 0 01-1 1H6a1 1 0 01-1-1v-9a1 1 0 011-1h1V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v3h6V7a3 3 0 00-3-3z" fill="currentColor"/></svg>Authorized personnel only</div>
   </div>
 </div>
 <script>
