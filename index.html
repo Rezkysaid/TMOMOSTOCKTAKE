@@ -383,17 +383,26 @@ header{
 .scan-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;border:none;background:var(--accent3);color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:background 0.15s,color 0.15s,transform 0.15s;}
 .scan-btn:active{transform:translateY(-50%) scale(0.85);}
 .scan-btn svg{width:15px;height:15px;}
-.scanner-overlay{display:none;position:fixed;inset:0;z-index:250;background:#000;flex-direction:column;}
-.scanner-overlay.open{display:flex;}
-.scanner-video-wrap{position:relative;flex:1;overflow:hidden;}
+.scanner-overlay{display:none;position:fixed;inset:0;z-index:250;background:#000;}
+.scanner-overlay.open{display:block;}
+.scanner-topbar{position:absolute;top:0;left:0;right:0;z-index:3;display:flex;align-items:center;justify-content:center;padding:max(18px,env(safe-area-inset-top)) 16px 28px;background:linear-gradient(180deg,rgba(0,0,0,0.65),rgba(0,0,0,0));pointer-events:none;}
+.scanner-title{color:#fff;font-family:var(--sans);font-weight:800;font-size:15px;letter-spacing:0.2px;text-shadow:0 1px 4px rgba(0,0,0,0.4);}
+.scanner-video-wrap{position:absolute;inset:0;overflow:hidden;}
 .scanner-video-wrap video{width:100%;height:100%;object-fit:cover;display:block;}
-.scanner-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:78%;max-width:320px;height:130px;border:3px solid var(--accent);border-radius:16px;box-shadow:0 0 0 2000px rgba(0,0,0,0.5);pointer-events:none;}
-.scanner-frame::before{content:'';position:absolute;left:0;right:0;top:50%;height:2px;background:rgba(255,90,90,0.85);box-shadow:0 0 8px rgba(255,90,90,0.7);animation:scanLineMove 1.6s ease-in-out infinite;}
-@keyframes scanLineMove{0%,100%{top:14%;}50%{top:86%;}}
-.scanner-hint{position:absolute;bottom:80px;left:0;right:0;text-align:center;color:#fff;font-family:var(--sans);font-size:13px;font-weight:600;opacity:0.85;pointer-events:none;}
-.scanner-close-btn{position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;z-index:2;cursor:pointer;}
-.scanner-status{position:absolute;bottom:30px;left:14px;right:14px;text-align:center;color:#9fd3ff;font-family:var(--mono,monospace);font-size:11px;font-weight:600;background:rgba(0,0,0,0.5);padding:6px 10px;border-radius:10px;pointer-events:none;}
-.scanner-status.err{color:#ff8a80;}
+.scanner-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:78%;max-width:320px;height:140px;border-radius:20px;box-shadow:0 0 0 2000px rgba(0,0,0,0.55);pointer-events:none;}
+.scanner-corner{position:absolute;width:30px;height:30px;border:3.5px solid var(--accent2);border-radius:14px;}
+.scanner-corner.tl{top:-3px;left:-3px;border-right-color:transparent;border-bottom-color:transparent;border-radius:14px 0 0 0;}
+.scanner-corner.tr{top:-3px;right:-3px;border-left-color:transparent;border-bottom-color:transparent;border-radius:0 14px 0 0;}
+.scanner-corner.bl{bottom:-3px;left:-3px;border-right-color:transparent;border-top-color:transparent;border-radius:0 0 0 14px;}
+.scanner-corner.br{bottom:-3px;right:-3px;border-left-color:transparent;border-top-color:transparent;border-radius:0 0 14px 0;}
+.scanner-frame::after{content:'';position:absolute;left:6%;right:6%;top:50%;height:2.5px;background:linear-gradient(90deg,transparent,rgba(255,90,90,0.95) 20%,rgba(255,90,90,0.95) 80%,transparent);box-shadow:0 0 10px rgba(255,90,90,0.85);border-radius:2px;animation:scanLineMove 1.8s ease-in-out infinite;}
+@keyframes scanLineMove{0%,100%{top:12%;}50%{top:88%;}}
+.scanner-hint{position:absolute;bottom:92px;left:0;right:0;display:flex;justify-content:center;pointer-events:none;}
+.scanner-hint span{color:#fff;font-family:var(--sans);font-size:13px;font-weight:700;opacity:0.95;background:rgba(20,24,38,0.55);padding:8px 18px;border-radius:20px;backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.1);}
+.scanner-close-btn{position:absolute;top:max(16px,env(safe-area-inset-top));right:16px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.14);border:1.5px solid rgba(255,255,255,0.18);color:#fff;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;z-index:4;cursor:pointer;backdrop-filter:blur(6px);transition:background 0.15s,transform 0.15s;}
+.scanner-close-btn:active{transform:scale(0.88);background:rgba(255,255,255,0.24);}
+.scanner-status{position:absolute;bottom:30px;left:14px;right:14px;text-align:center;color:#bcdcff;font-family:var(--mono,monospace);font-size:11px;font-weight:600;background:rgba(16,20,34,0.65);padding:8px 12px;border-radius:12px;pointer-events:none;border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(6px);transition:color 0.2s,border-color 0.2s;}
+.scanner-status.err{color:#ff9b91;border-color:rgba(255,90,90,0.3);}
 .modal h2{font-size:17px;font-weight:700;margin-bottom:18px;color:var(--gold);}
 .form-group{margin-bottom:14px;}
 .form-group label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);margin-bottom:6px;font-family:var(--mono);}
@@ -970,14 +979,22 @@ button:focus-visible,.cat-tab:focus-visible,select:focus-visible,a:focus-visible
 
 <!-- BARCODE SCANNER -->
 <div class="scanner-overlay" id="scannerOverlay">
-  <button class="scanner-close-btn" id="scannerCloseBtn" onclick="closeScanner()">✕</button>
   <div class="scanner-video-wrap">
     <video id="scannerVideo" muted autoplay playsinline></video>
     <canvas id="scannerCanvas" style="display:none;"></canvas>
-    <div class="scanner-frame"></div>
-    <div class="scanner-hint" id="scannerHint">Point camera at barcode</div>
+    <div class="scanner-frame">
+      <span class="scanner-corner tl"></span>
+      <span class="scanner-corner tr"></span>
+      <span class="scanner-corner bl"></span>
+      <span class="scanner-corner br"></span>
+    </div>
+    <div class="scanner-hint"><span id="scannerHint">📷 Point camera at barcode</span></div>
     <div class="scanner-status" id="scannerStatus">Starting camera…</div>
   </div>
+  <div class="scanner-topbar">
+    <span class="scanner-title">Scan Barcode</span>
+  </div>
+  <button class="scanner-close-btn" id="scannerCloseBtn" onclick="closeScanner()">✕</button>
 </div>
 
 <div class="toast" id="toast"></div>
