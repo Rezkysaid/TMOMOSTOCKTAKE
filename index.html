@@ -966,7 +966,7 @@ button:focus-visible,.cat-tab:focus-visible,select:focus-visible,a:focus-visible
 <div class="scanner-overlay" id="scannerOverlay">
   <button class="scanner-close-btn" id="scannerCloseBtn" onclick="closeScanner()">✕</button>
   <div class="scanner-video-wrap">
-    <video id="scannerVideo" muted playsinline></video>
+    <video id="scannerVideo" muted autoplay playsinline></video>
     <div class="scanner-frame"></div>
     <div class="scanner-hint">Point camera at barcode</div>
   </div>
@@ -1378,20 +1378,29 @@ window.openScanner = async function(targetInputId) {
   const video = document.getElementById('scannerVideo');
   overlay.classList.add('open');
   try {
-    const { BrowserMultiFormatReader } = await import('https://esm.sh/@zxing/browser@0.1.4');
-    _zxingReader = new BrowserMultiFormatReader();
-    const devices = await BrowserMultiFormatReader.listVideoInputDevices();
-    const backCam = devices.find(d => /back|rear|environment/i.test(d.label));
-    const deviceId = (backCam || devices[devices.length - 1] || {}).deviceId;
-    await _zxingReader.decodeFromVideoDevice(deviceId, video, (result) => {
-      if (!result) return;
-      const code = result.getText();
-      const input = document.getElementById(targetInputId);
-      if (input) input.value = code;
-      if (navigator.vibrate) navigator.vibrate(80);
-      closeScanner();
-      showToast('Barcode scanned: ' + code, 'success');
-    });
+    const [{ BrowserMultiFormatReader }, { DecodeHintType }] = await Promise.all([
+      import('https://esm.sh/@zxing/browser@0.1.4'),
+      import('https://esm.sh/@zxing/library@0.21.3')
+    ]);
+    const hints = new Map();
+    hints.set(DecodeHintType.TRY_HARDER, true);
+    _zxingReader = new BrowserMultiFormatReader(hints);
+    // Use explicit constraints (not decodeFromVideoDevice's device-label guess) so we
+    // reliably get the rear camera at a high enough resolution for the decoder to read
+    // small/blurry barcodes - low-res frames were the likely cause of scans never landing.
+    await _zxingReader.decodeFromConstraints(
+      { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
+      video,
+      (result) => {
+        if (!result) return;
+        const code = result.getText();
+        const input = document.getElementById(targetInputId);
+        if (input) input.value = code;
+        if (navigator.vibrate) navigator.vibrate(80);
+        closeScanner();
+        showToast('Barcode scanned: ' + code, 'success');
+      }
+    );
   } catch (e) {
     closeScanner();
     showToast(e && e.name === 'NotAllowedError' ? 'Camera permission denied' : 'Could not start camera', 'error');
