@@ -390,6 +390,8 @@ header{
 @keyframes scanLineMove{0%,100%{top:14%;}50%{top:86%;}}
 .scanner-hint{position:absolute;bottom:80px;left:0;right:0;text-align:center;color:#fff;font-family:var(--sans);font-size:13px;font-weight:600;opacity:0.85;pointer-events:none;}
 .scanner-close-btn{position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;z-index:2;cursor:pointer;}
+.scanner-status{position:absolute;bottom:30px;left:14px;right:14px;text-align:center;color:#9fd3ff;font-family:var(--mono,monospace);font-size:11px;font-weight:600;background:rgba(0,0,0,0.5);padding:6px 10px;border-radius:10px;pointer-events:none;}
+.scanner-status.err{color:#ff8a80;}
 .modal h2{font-size:17px;font-weight:700;margin-bottom:18px;color:var(--gold);}
 .form-group{margin-bottom:14px;}
 .form-group label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);margin-bottom:6px;font-family:var(--mono);}
@@ -968,7 +970,8 @@ button:focus-visible,.cat-tab:focus-visible,select:focus-visible,a:focus-visible
   <div class="scanner-video-wrap">
     <video id="scannerVideo" muted autoplay playsinline></video>
     <div class="scanner-frame"></div>
-    <div class="scanner-hint">Point camera at barcode</div>
+    <div class="scanner-hint" id="scannerHint">Point camera at barcode</div>
+    <div class="scanner-status" id="scannerStatus">Starting camera…</div>
   </div>
 </div>
 
@@ -1368,6 +1371,14 @@ window.closeItemModal = function() {
 }
 
 let _zxingReader = null;
+let _scanAttempts = 0;
+
+function _setScannerStatus(text, isErr) {
+  const el = document.getElementById('scannerStatus');
+  if (!el) return;
+  el.textContent = text;
+  el.classList.toggle('err', !!isErr);
+}
 
 window.openScanner = async function(targetInputId) {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -1376,7 +1387,9 @@ window.openScanner = async function(targetInputId) {
   }
   const overlay = document.getElementById('scannerOverlay');
   const video = document.getElementById('scannerVideo');
+  _scanAttempts = 0;
   overlay.classList.add('open');
+  _setScannerStatus('Loading scanner library…');
   try {
     const [{ BrowserMultiFormatReader }, { DecodeHintType }] = await Promise.all([
       import('https://esm.sh/@zxing/browser@0.1.4'),
@@ -1385,24 +1398,36 @@ window.openScanner = async function(targetInputId) {
     const hints = new Map();
     hints.set(DecodeHintType.TRY_HARDER, true);
     _zxingReader = new BrowserMultiFormatReader(hints);
+    _setScannerStatus('Requesting camera…');
+    video.addEventListener('loadedmetadata', () => {
+      _setScannerStatus('Scanning… (' + video.videoWidth + '×' + video.videoHeight + ')');
+    }, { once: true });
     // Use explicit constraints (not decodeFromVideoDevice's device-label guess) so we
     // reliably get the rear camera at a high enough resolution for the decoder to read
     // small/blurry barcodes - low-res frames were the likely cause of scans never landing.
     await _zxingReader.decodeFromConstraints(
       { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
       video,
-      (result) => {
-        if (!result) return;
-        const code = result.getText();
-        const input = document.getElementById(targetInputId);
-        if (input) input.value = code;
-        if (navigator.vibrate) navigator.vibrate(80);
-        closeScanner();
-        showToast('Barcode scanned: ' + code, 'success');
+      (result, err) => {
+        _scanAttempts++;
+        if (result) {
+          const code = result.getText();
+          const input = document.getElementById(targetInputId);
+          if (input) input.value = code;
+          if (navigator.vibrate) navigator.vibrate(80);
+          closeScanner();
+          showToast('Barcode scanned: ' + code, 'success');
+          return;
+        }
+        if (err && err.name && err.name !== 'NotFoundException' && err.name !== 'NotFoundException2') {
+          _setScannerStatus('Decode error: ' + err.name + ' - ' + (err.message || ''), true);
+        } else {
+          _setScannerStatus('Scanning… (' + video.videoWidth + '×' + video.videoHeight + ', ' + _scanAttempts + ' frames)');
+        }
       }
     );
   } catch (e) {
-    closeScanner();
+    _setScannerStatus((e && (e.name + ': ' + e.message)) || 'Could not start camera', true);
     showToast(e && e.name === 'NotAllowedError' ? 'Camera permission denied' : 'Could not start camera', 'error');
   }
 }
