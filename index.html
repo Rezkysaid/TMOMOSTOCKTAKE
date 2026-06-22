@@ -627,8 +627,6 @@ body.authed #loginGate{display:none!important;}
 .login-particle:nth-child(11){left:48%;width:3px;height:3px;animation-duration:20s;animation-delay:-2s;--drift:16px;}
 .login-particle:nth-child(12){left:73%;width:2px;height:2px;animation-duration:13s;animation-delay:-16s;--drift:-8px;}
 .login-card{position:relative;width:100%;max-width:280px;background:rgba(255,255,255,0.97);border:1px solid rgba(255,255,255,0.6);border-radius:24px;padding:28px 22px 24px;box-shadow:0 25px 60px rgba(5,10,40,0.45),inset 0 1px 0 rgba(255,255,255,0.7);text-align:center;animation:loginCardIn 0.5s cubic-bezier(.2,.8,.2,1);}
-.login-card::before{content:'';position:absolute;inset:-6px;border-radius:28px;background:linear-gradient(135deg,var(--accent),#3bdfd0,var(--gold));z-index:-1;opacity:0.32;filter:blur(11px);animation:loginGlowBreathe 4s ease-in-out infinite;}
-@keyframes loginGlowBreathe{0%,100%{opacity:0.2;}50%{opacity:0.4;}}
 body.dark .login-card{background:rgba(12,17,32,0.98);border-color:rgba(255,255,255,0.1);}
 @keyframes loginCardIn{0%{opacity:0;transform:translateY(18px) scale(0.96);}100%{opacity:1;transform:translateY(0) scale(1);}}
 .login-brand{display:flex;align-items:center;justify-content:center;margin-bottom:22px;}
