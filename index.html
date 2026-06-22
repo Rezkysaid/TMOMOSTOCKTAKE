@@ -733,6 +733,7 @@ button:focus-visible,.cat-tab:focus-visible,select:focus-visible,a:focus-visible
   outline:2px solid var(--gold);outline-offset:2px;
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.20.0/umd/index.min.js" defer></script>
 </head>
 <body>
 
@@ -969,6 +970,7 @@ button:focus-visible,.cat-tab:focus-visible,select:focus-visible,a:focus-visible
   <button class="scanner-close-btn" id="scannerCloseBtn" onclick="closeScanner()">✕</button>
   <div class="scanner-video-wrap">
     <video id="scannerVideo" muted autoplay playsinline></video>
+    <canvas id="scannerCanvas" style="display:none;"></canvas>
     <div class="scanner-frame"></div>
     <div class="scanner-hint" id="scannerHint">Point camera at barcode</div>
     <div class="scanner-status" id="scannerStatus">Starting camera…</div>
@@ -1370,8 +1372,10 @@ window.closeItemModal = function() {
   }
 }
 
-let _zxingReader = null;
+let _scanStream = null;
+let _scanLoopId = null;
 let _scanAttempts = 0;
+const _SCAN_NO_MATCH = ['NotFoundException','ChecksumException','FormatException'];
 
 function _setScannerStatus(text, isErr) {
   const el = document.getElementById('scannerStatus');
@@ -1385,32 +1389,44 @@ window.openScanner = async function(targetInputId) {
     showToast('Camera not supported on this browser','error');
     return;
   }
+  if (!window.ZXing) {
+    _setScannerStatus('Scanner library failed to load (check connection)', true);
+    showToast('Scanner library failed to load','error');
+    document.getElementById('scannerOverlay').classList.add('open');
+    return;
+  }
   const overlay = document.getElementById('scannerOverlay');
   const video = document.getElementById('scannerVideo');
+  const canvas = document.getElementById('scannerCanvas');
   _scanAttempts = 0;
   overlay.classList.add('open');
-  _setScannerStatus('Loading scanner library…');
+  _setScannerStatus('Requesting camera…');
   try {
-    const [{ BrowserMultiFormatReader }, { DecodeHintType }] = await Promise.all([
-      import('https://esm.sh/@zxing/browser@0.1.4'),
-      import('https://esm.sh/@zxing/library@0.21.3')
-    ]);
+    _scanStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+      audio: false
+    });
+    video.srcObject = _scanStream;
+    await video.play();
+
     const hints = new Map();
-    hints.set(DecodeHintType.TRY_HARDER, true);
-    _zxingReader = new BrowserMultiFormatReader(hints);
-    _setScannerStatus('Requesting camera…');
-    video.addEventListener('loadedmetadata', () => {
-      _setScannerStatus('Scanning… (' + video.videoWidth + '×' + video.videoHeight + ')');
-    }, { once: true });
-    // Use explicit constraints (not decodeFromVideoDevice's device-label guess) so we
-    // reliably get the rear camera at a high enough resolution for the decoder to read
-    // small/blurry barcodes - low-res frames were the likely cause of scans never landing.
-    await _zxingReader.decodeFromConstraints(
-      { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
-      video,
-      (result, err) => {
-        _scanAttempts++;
-        if (result) {
+    hints.set(window.ZXing.DecodeHintType.TRY_HARDER, true);
+    const reader = new window.ZXing.MultiFormatReader();
+    reader.setHints(hints);
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    const scanFrame = () => {
+      if (!overlay.classList.contains('open')) return;
+      const vw = video.videoWidth, vh = video.videoHeight;
+      if (vw && vh) {
+        canvas.width = vw; canvas.height = vh;
+        ctx.drawImage(video, 0, 0, vw, vh);
+        try {
+          const imgData = ctx.getImageData(0, 0, vw, vh);
+          const gray = window.ZXing.RGBLuminanceSource.toGrayscaleBuffer(imgData.data, vw, vh);
+          const luminanceSource = new window.ZXing.RGBLuminanceSource(gray, vw, vh);
+          const binaryBitmap = new window.ZXing.BinaryBitmap(new window.ZXing.HybridBinarizer(luminanceSource));
+          const result = reader.decode(binaryBitmap);
           const code = result.getText();
           const input = document.getElementById(targetInputId);
           if (input) input.value = code;
@@ -1418,14 +1434,19 @@ window.openScanner = async function(targetInputId) {
           closeScanner();
           showToast('Barcode scanned: ' + code, 'success');
           return;
-        }
-        if (err && err.name && err.name !== 'NotFoundException' && err.name !== 'NotFoundException2') {
-          _setScannerStatus('Decode error: ' + err.name + ' - ' + (err.message || ''), true);
-        } else {
-          _setScannerStatus('Scanning… (' + video.videoWidth + '×' + video.videoHeight + ', ' + _scanAttempts + ' frames)');
+        } catch (err) {
+          _scanAttempts++;
+          const name = err && err.name;
+          if (name && !_SCAN_NO_MATCH.includes(name)) {
+            _setScannerStatus('Decode error: ' + name + ' - ' + (err.message || ''), true);
+          } else {
+            _setScannerStatus('Scanning… (' + vw + '×' + vh + ', ' + _scanAttempts + ' frames)');
+          }
         }
       }
-    );
+      _scanLoopId = setTimeout(scanFrame, 150);
+    };
+    scanFrame();
   } catch (e) {
     _setScannerStatus((e && (e.name + ': ' + e.message)) || 'Could not start camera', true);
     showToast(e && e.name === 'NotAllowedError' ? 'Camera permission denied' : 'Could not start camera', 'error');
@@ -1434,10 +1455,13 @@ window.openScanner = async function(targetInputId) {
 
 window.closeScanner = function() {
   document.getElementById('scannerOverlay').classList.remove('open');
-  if (_zxingReader) {
-    try { _zxingReader.reset(); } catch (e) {}
-    _zxingReader = null;
+  if (_scanLoopId) { clearTimeout(_scanLoopId); _scanLoopId = null; }
+  if (_scanStream) {
+    _scanStream.getTracks().forEach(t => t.stop());
+    _scanStream = null;
   }
+  const video = document.getElementById('scannerVideo');
+  if (video) video.srcObject = null;
 }
 
 window.editItem = function(id) {
