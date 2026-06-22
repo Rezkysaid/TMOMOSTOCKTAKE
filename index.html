@@ -374,6 +374,22 @@ header{
 .modal{background:var(--card);border:1.5px solid var(--border);border-top:3px solid var(--accent);border-radius:24px 24px 0 0;padding:8px 20px 40px;width:100%;max-width:520px;animation:sheetUp 0.28s ease;max-height:92vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(59,91,252,0.15);}
 @keyframes sheetUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
 .modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 18px;}
+
+/* BARCODE SCANNER */
+.barcode-input-wrap{position:relative;}
+.barcode-input-wrap input{padding-right:44px;}
+.scan-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;border:none;background:var(--accent3);color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:background 0.15s,color 0.15s,transform 0.15s;}
+.scan-btn:active{transform:translateY(-50%) scale(0.85);}
+.scan-btn svg{width:15px;height:15px;}
+.scanner-overlay{display:none;position:fixed;inset:0;z-index:250;background:#000;flex-direction:column;}
+.scanner-overlay.open{display:flex;}
+.scanner-video-wrap{position:relative;flex:1;overflow:hidden;}
+.scanner-video-wrap video{width:100%;height:100%;object-fit:cover;display:block;}
+.scanner-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:78%;max-width:320px;height:130px;border:3px solid var(--accent);border-radius:16px;box-shadow:0 0 0 2000px rgba(0,0,0,0.5);pointer-events:none;}
+.scanner-frame::before{content:'';position:absolute;left:0;right:0;top:50%;height:2px;background:rgba(255,90,90,0.85);box-shadow:0 0 8px rgba(255,90,90,0.7);animation:scanLineMove 1.6s ease-in-out infinite;}
+@keyframes scanLineMove{0%,100%{top:14%;}50%{top:86%;}}
+.scanner-hint{position:absolute;bottom:80px;left:0;right:0;text-align:center;color:#fff;font-family:var(--sans);font-size:13px;font-weight:600;opacity:0.85;pointer-events:none;}
+.scanner-close-btn{position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;z-index:2;cursor:pointer;}
 .modal h2{font-size:17px;font-weight:700;margin-bottom:18px;color:var(--gold);}
 .form-group{margin-bottom:14px;}
 .form-group label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);margin-bottom:6px;font-family:var(--mono);}
@@ -913,7 +929,12 @@ button:focus-visible,.cat-tab:focus-visible,select:focus-visible,a:focus-visible
   <div class="modal">
     <div class="modal-handle"></div>
     <h2 id="modalItemTitle">+ Add New Item</h2>
-    <div class="form-group"><label>Barcode</label><input type="text" id="fieldBarcode" placeholder="e.g. 8888001234567" inputmode="numeric"></div>
+    <div class="form-group"><label>Barcode</label>
+      <div class="barcode-input-wrap">
+        <input type="text" id="fieldBarcode" placeholder="e.g. 8888001234567" inputmode="numeric">
+        <button type="button" class="scan-btn" onclick="openScanner('fieldBarcode')" title="Scan barcode"><svg viewBox="0 0 24 24"><path d="M4 5h2v14H4V5zm4 0h1v14H8V5zm3 0h2v14h-2V5zm4 0h1v14h-1V5zm3 0h2v14h-2V5z" fill="currentColor"/></svg></button>
+      </div>
+    </div>
     <div class="form-group"><label>Item Name</label><input type="text" id="fieldName" placeholder="e.g. Milo 3in1 30g"></div>
     <div class="form-group"><label>Category</label><select id="fieldCategory"></select></div>
     <div class="form-row">
@@ -938,6 +959,16 @@ button:focus-visible,.cat-tab:focus-visible,select:focus-visible,a:focus-visible
       <button class="btn-cancel" onclick="closeCatModal()">Cancel</button>
       <button class="btn-save" onclick="saveCategory()">Add Category</button>
     </div>
+  </div>
+</div>
+
+<!-- BARCODE SCANNER -->
+<div class="scanner-overlay" id="scannerOverlay">
+  <button class="scanner-close-btn" id="scannerCloseBtn" onclick="closeScanner()">✕</button>
+  <div class="scanner-video-wrap">
+    <video id="scannerVideo" muted playsinline></video>
+    <div class="scanner-frame"></div>
+    <div class="scanner-hint">Point camera at barcode</div>
   </div>
 </div>
 
@@ -1333,6 +1364,45 @@ window.closeItemModal = function() {
   editingId = null;
   if (window._lockedScrollY !== undefined) {
     unlockBodyScroll();
+  }
+}
+
+let _zxingReader = null;
+
+window.openScanner = async function(targetInputId) {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast('Camera not supported on this browser','error');
+    return;
+  }
+  const overlay = document.getElementById('scannerOverlay');
+  const video = document.getElementById('scannerVideo');
+  overlay.classList.add('open');
+  try {
+    const { BrowserMultiFormatReader } = await import('https://esm.sh/@zxing/browser@0.1.4');
+    _zxingReader = new BrowserMultiFormatReader();
+    const devices = await BrowserMultiFormatReader.listVideoInputDevices();
+    const backCam = devices.find(d => /back|rear|environment/i.test(d.label));
+    const deviceId = (backCam || devices[devices.length - 1] || {}).deviceId;
+    await _zxingReader.decodeFromVideoDevice(deviceId, video, (result) => {
+      if (!result) return;
+      const code = result.getText();
+      const input = document.getElementById(targetInputId);
+      if (input) input.value = code;
+      if (navigator.vibrate) navigator.vibrate(80);
+      closeScanner();
+      showToast('Barcode scanned: ' + code, 'success');
+    });
+  } catch (e) {
+    closeScanner();
+    showToast(e && e.name === 'NotAllowedError' ? 'Camera permission denied' : 'Could not start camera', 'error');
+  }
+}
+
+window.closeScanner = function() {
+  document.getElementById('scannerOverlay').classList.remove('open');
+  if (_zxingReader) {
+    try { _zxingReader.reset(); } catch (e) {}
+    _zxingReader = null;
   }
 }
 
