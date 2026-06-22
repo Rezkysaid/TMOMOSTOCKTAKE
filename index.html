@@ -248,11 +248,13 @@ header{
 .search-wrap{display:flex;gap:8px;margin-bottom:14px;}
 .search-input-wrap{flex:1;position:relative;}
 .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none;}
-.search-wrap input{width:100%;background:var(--card);border:2px solid var(--border2);color:var(--text);padding:12px 40px 12px 36px;border-radius:14px;font-family:var(--sans);font-size:16px;outline:none;transition:border-color 0.2s;box-shadow:inset 0 3px 0 rgba(0,0,0,0.2);font-weight:500;}
+.search-wrap input{width:100%;background:var(--card);border:2px solid var(--border2);color:var(--text);padding:12px 72px 12px 36px;border-radius:14px;font-family:var(--sans);font-size:16px;outline:none;transition:border-color 0.2s;box-shadow:inset 0 3px 0 rgba(0,0,0,0.2);font-weight:500;}
 .search-wrap input:focus{border-color:var(--gold);box-shadow:inset 0 3px 0 rgba(0,0,0,0.2),0 0 0 3px rgba(255,217,61,0.15);}
 .search-wrap input::placeholder{color:var(--muted);}
-.search-mic-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;border:none;background:var(--accent3);color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;padding:0;transition:background 0.15s,color 0.15s;}
-.search-mic-btn svg{width:14px;height:14px;}
+.search-mic-btn,.search-scan-btn{position:absolute;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;border:none;background:var(--accent3);color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;padding:0;transition:background 0.15s,color 0.15s;}
+.search-mic-btn{right:6px;}
+.search-scan-btn{right:40px;}
+.search-mic-btn svg,.search-scan-btn svg{width:14px;height:14px;}
 .search-mic-btn.listening{background:var(--red);color:#fff;animation:searchMicPulse 1s ease-in-out infinite;}
 @keyframes searchMicPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4);}50%{box-shadow:0 0 0 6px rgba(239,68,68,0.15);}}
 .filter-select{background:var(--card);border:2px solid var(--border2);color:var(--text);padding:12px 10px;border-radius:14px;font-family:var(--sans);font-size:16px;outline:none;-webkit-appearance:none;cursor:pointer;box-shadow:inset 0 3px 0 rgba(0,0,0,0.2);font-weight:600;transition:border-color 0.2s,box-shadow 0.2s;}
@@ -675,7 +677,7 @@ body.dark .login-card{background:rgba(12,17,32,0.98);border-color:rgba(255,255,2
 /* Smooth base transition for all interactive controls */
 .btn-add-item,.btn-export,.btn-select-cat,.btn-save,.btn-cancel,
 .cat-tab,.btn-cat-add,.btn-cat-del,.ibtn,.filter-select,
-.search-mic-btn,.stat-item,.progress-wrap{
+.search-mic-btn,.search-scan-btn,.stat-item,.progress-wrap{
   transition:transform 0.18s cubic-bezier(.34,1.56,.64,1),box-shadow 0.2s ease,background 0.2s ease,border-color 0.2s ease;
 }
 
@@ -690,7 +692,7 @@ body.dark .login-card{background:rgba(12,17,32,0.98);border-color:rgba(255,255,2
 .ibtn:active{transform:scale(0.86);}
 .ibtn-fwd:active{box-shadow:0 0 0 4px rgba(59,91,252,0.2);}
 .ibtn-del:active{box-shadow:0 0 0 4px rgba(239,68,68,0.2);}
-.search-mic-btn:active{transform:translateY(-50%) scale(0.85);}
+.search-mic-btn:active,.search-scan-btn:active{transform:translateY(-50%) scale(0.85);}
 .filter-select:active{transform:scale(0.97);}
 
 /* Hover lift for pointer devices (ignored on touch) */
@@ -814,7 +816,7 @@ button:focus-visible,.cat-tab:focus-visible,select:focus-visible,a:focus-visible
 <script>
 // Tap ripple + light haptic feedback on interactive controls
 (function(){
-  var RIPPLE_SEL = '.btn-add-item,.btn-export,.btn-save,.btn-cancel,.btn-select-cat,.cat-tab,.btn-cat-add,.btn-cat-del,.ibtn,.chat-fab,.login-btn,.search-mic-btn';
+  var RIPPLE_SEL = '.btn-add-item,.btn-export,.btn-save,.btn-cancel,.btn-select-cat,.cat-tab,.btn-cat-add,.btn-cat-del,.ibtn,.chat-fab,.login-btn,.search-mic-btn,.search-scan-btn';
   document.addEventListener('pointerdown', function(e){
     var el = e.target.closest && e.target.closest(RIPPLE_SEL);
     if (!el) return;
@@ -909,6 +911,7 @@ button:focus-visible,.cat-tab:focus-visible,select:focus-visible,a:focus-visible
     <div class="search-input-wrap">
       <span class="search-icon">⌕</span>
       <input type="text" id="searchInput" placeholder="Search barcode or name..." inputmode="numeric" pattern="[0-9]*" oninput="renderItems()">
+      <button type="button" class="search-scan-btn" id="searchScanBtn" onclick="openScanner('searchInput')" title="Search by scanning barcode"><svg viewBox="0 0 24 24"><path d="M4 5h2v14H4V5zm4 0h1v14H8V5zm3 0h2v14h-2V5zm4 0h1v14h-1V5zm3 0h2v14h-2V5z" fill="currentColor"/></svg></button>
       <button type="button" class="search-mic-btn" id="searchMicBtn" title="Search by voice"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.92V21h2v-3.08A7 7 0 0019 11h-2z" fill="currentColor"/></svg></button>
     </div>
     <select class="filter-select" id="filterStatus" onchange="renderItems()">
@@ -1437,7 +1440,10 @@ window.openScanner = async function(targetInputId) {
           const result = reader.decode(binaryBitmap);
           const code = result.getText();
           const input = document.getElementById(targetInputId);
-          if (input) input.value = code;
+          if (input) {
+            input.value = code;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+          }
           if (navigator.vibrate) navigator.vibrate(80);
           closeScanner();
           showToast('Barcode scanned: ' + code, 'success');
