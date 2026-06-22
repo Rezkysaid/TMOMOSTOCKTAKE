@@ -1375,6 +1375,8 @@ function unlockBodyScroll() {
   document.body.style.width = '';
   window.scrollTo(0, y||0);
 }
+window.lockBodyScroll = lockBodyScroll;
+window.unlockBodyScroll = unlockBodyScroll;
 
 window.openItemModal = function() {
   editingId = null;
@@ -1719,6 +1721,7 @@ window.forwardItem = function(itemId) {
     'Physical: ' + physical + ' | System: ' + system + ' | Diff: ' + diffStr + '\n' +
     status;
   document.getElementById('chatInput').value = msg;
+  if (window.lockBodyScroll) window.lockBodyScroll();
   document.getElementById('chatOverlay').classList.add('open');
   setTimeout(function(){ document.getElementById('chatMessages').scrollTop = 999999; }, 100);
   showToast('Item forwarded! Tap ➤ to send.', 'success');
@@ -1741,6 +1744,7 @@ window.sendSummaryToChat = function() {
     '📈 Progress: ' + pct + '%\n' +
     '⏰ ' + new Date().toLocaleString('en-MY');
   document.getElementById('chatInput').value = msg;
+  if (window.lockBodyScroll) window.lockBodyScroll();
   document.getElementById('chatOverlay').classList.add('open');
   showToast('Summary ready! Tap ➤ to send.', 'success');
 };
@@ -1914,6 +1918,7 @@ window.forwardItem = function(itemId) {
   var status = diff === 0 ? '✅ Matched' : (physical === 0 ? '🔴 Uncounted' : '⚠️ Mismatch');
   var msg = '📦 ' + (snap.category||'') + '\n' + snap.name + '\n🔢 ' + (snap.barcode||'-') + '\nPhysical: ' + physical + ' | System: ' + system + ' | Diff: ' + diffStr + '\n' + status;
   document.getElementById('chatInput').value = msg;
+  if (window.lockBodyScroll) window.lockBodyScroll();
   document.getElementById('chatOverlay').classList.add('open');
   // Brief flash on the fab button
   var fab = document.getElementById('chatFab');
@@ -2040,6 +2045,7 @@ window.forwardItem = function(itemId) {
 
   function open() {
     isOpen = true;
+    if (window.lockBodyScroll) window.lockBodyScroll();
     document.getElementById('chatOverlay').classList.add('open');
     document.getElementById('chatBadge').classList.remove('show');
     document.getElementById('chatBadge').textContent = '';
@@ -2052,6 +2058,7 @@ window.forwardItem = function(itemId) {
   function close() {
     isOpen = false;
     document.getElementById('chatOverlay').classList.remove('open');
+    if (window.unlockBodyScroll && window._lockedScrollY !== undefined) window.unlockBodyScroll();
   }
 
   function pull() {
