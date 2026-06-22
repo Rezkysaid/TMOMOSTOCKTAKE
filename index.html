@@ -1377,6 +1377,14 @@ let _scanLoopId = null;
 let _scanAttempts = 0;
 const _SCAN_NO_MATCH = ['NotFoundException','ChecksumException','FormatException'];
 
+function _toGrayscaleBuffer(rgba, width, height) {
+  const gray = new Uint8ClampedArray(width * height);
+  for (let i = 0, j = 0; i < rgba.length; i += 4, j++) {
+    gray[j] = (306 * rgba[i] + 601 * rgba[i + 1] + 117 * rgba[i + 2] + 0x200) >> 10;
+  }
+  return gray;
+}
+
 function _setScannerStatus(text, isErr) {
   const el = document.getElementById('scannerStatus');
   if (!el) return;
@@ -1423,7 +1431,7 @@ window.openScanner = async function(targetInputId) {
         ctx.drawImage(video, 0, 0, vw, vh);
         try {
           const imgData = ctx.getImageData(0, 0, vw, vh);
-          const gray = window.ZXing.RGBLuminanceSource.toGrayscaleBuffer(imgData.data, vw, vh);
+          const gray = _toGrayscaleBuffer(imgData.data, vw, vh);
           const luminanceSource = new window.ZXing.RGBLuminanceSource(gray, vw, vh);
           const binaryBitmap = new window.ZXing.BinaryBitmap(new window.ZXing.HybridBinarizer(luminanceSource));
           const result = reader.decode(binaryBitmap);
